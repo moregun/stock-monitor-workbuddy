@@ -54,7 +54,7 @@
     .refresh-btn:hover { background: #2ea043; }
     .refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-    /* ---------- 大盘监测卡片 ---------- */
+    /* ---------- 大盘监测卡片（三列布局） ---------- */
     .hs300-card {
       margin: 20px 24px;
       background: #161b22;
@@ -65,7 +65,7 @@
       align-items: center;
       justify-content: space-between;
       flex-wrap: wrap;
-      gap: 16px;
+      gap: 20px;
     }
     .hs300-card.panic {
       border-color: #ff4d4f;
@@ -76,19 +76,39 @@
       0%, 100% { box-shadow: 0 0 0 0 rgba(255,77,79,0.3); }
       50% { box-shadow: 0 0 0 8px rgba(255,77,79,0); }
     }
+
+    /* 左列：沪深300价格 */
+    .hs300-left { display: flex; flex-direction: column; gap: 4px; }
     .hs300-info { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
     .hs300-price { font-size: 32px; font-weight: 800; color: #f0f6ff; }
     .hs300-change {
-      font-size: 20px; font-weight: 700;
-      padding: 2px 10px;
+      font-size: 15px; font-weight: 700;
+      padding: 2px 8px;
       border-radius: 6px;
     }
     .hs300-change.up { color: #ff4d4f; background: rgba(255,77,79,0.12); }
     .hs300-change.down { color: #00e676; background: rgba(0,230,118,0.12); }
     .hs300-change.flat { color: #8b949e; }
+    .hs300-reason { font-size: 13px; color: #8b949e; }
+
+    /* 中列：信号统计 */
+    .hs300-center { display: flex; gap: 12px; flex-wrap: wrap; }
+    .hs300-stat {
+      font-size: 14px;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-weight: 600;
+      white-space: nowrap;
+    }
+    .hs300-stat.green { background: rgba(0,200,83,0.12); color: #00c853; border: 1px solid rgba(0,200,83,0.3); }
+    .hs300-stat.yellow { background: rgba(255,171,0,0.12); color: #ffab00; border: 1px solid rgba(255,171,0,0.3); }
+    .hs300-stat.red { background: rgba(255,23,68,0.12); color: #ff1744; border: 1px solid rgba(255,23,68,0.3); }
+
+    /* 右列：状态标签 */
+    .hs300-right { display: flex; align-items: center; }
     .hs300-badge {
       font-size: 13px;
-      padding: 4px 12px;
+      padding: 4px 14px;
       border-radius: 20px;
       font-weight: 600;
     }
@@ -102,25 +122,6 @@
       color: #58a6ff;
       border: 1px solid rgba(88,166,255,0.3);
     }
-    .hs300-reason { font-size: 13px; color: #8b949e; margin-top: 4px; }
-
-    /* ---------- 摘要统计 ---------- */
-    .summary-bar {
-      display: flex;
-      gap: 16px;
-      padding: 0 24px;
-      margin-bottom: 20px;
-      flex-wrap: wrap;
-    }
-    .summary-item {
-      font-size: 14px;
-      padding: 6px 14px;
-      border-radius: 8px;
-      font-weight: 600;
-    }
-    .summary-item.green { background: rgba(0,200,83,0.12); color: #00c853; border: 1px solid rgba(0,200,83,0.3); }
-    .summary-item.yellow { background: rgba(255,171,0,0.12); color: #ffab00; border: 1px solid rgba(255,171,0,0.3); }
-    .summary-item.red { background: rgba(255,23,68,0.12); color: #ff1744; border: 1px solid rgba(255,23,68,0.3); }
 
     /* ---------- 板块分区 ---------- */
     .category-section {
@@ -281,7 +282,8 @@
 
 <!-- ========== 大盘监测 ========== -->
 <div class="hs300-card" id="hs300-card">
-  <div>
+  <!-- 左列：沪深300 -->
+  <div class="hs300-left">
     <div class="hs300-info">
       <span style="font-size:15px;color:#8b949e;">沪深300</span>
       <span class="hs300-price" id="hs300-price">--</span>
@@ -289,14 +291,18 @@
     </div>
     <div class="hs300-reason" id="hs300-reason"></div>
   </div>
-  <div class="hs300-badge normal-badge" id="hs300-badge">监测中...</div>
-</div>
 
-<!-- ========== 摘要统计 ========== -->
-<div class="summary-bar" id="summary-bar" style="display:none;">
-  <div class="summary-item green" id="sum-green">🟢 可买入：0 只</div>
-  <div class="summary-item yellow" id="sum-yellow">🟡 观望：0 只</div>
-  <div class="summary-item red" id="sum-red">🔴 不建议：0 只</div>
+  <!-- 中列：信号统计 -->
+  <div class="hs300-center" id="hs300-stats" style="display:none;">
+    <div class="hs300-stat green" id="sum-green">🟢 可买入：0 只</div>
+    <div class="hs300-stat yellow" id="sum-yellow">🟡 观望：0 只</div>
+    <div class="hs300-stat red" id="sum-red">🔴 不建议：0 只</div>
+  </div>
+
+  <!-- 右列：状态标签 -->
+  <div class="hs300-right">
+    <div class="hs300-badge normal-badge" id="hs300-badge">监测中...</div>
+  </div>
 </div>
 
 <!-- ========== 内容容器 ========== -->
@@ -527,12 +533,12 @@ function render(data) {
   }
   document.getElementById('hs300-reason').textContent = hs300.panic_reason || '';
 
-  // 2. 摘要
+  // 2. 摘要统计（嵌入大盘卡片中列）
   const summary = data.summary || {};
-  document.getElementById('sum-green').textContent = `🟢 可买入：${summary.green_count || 0} 只`;
-  document.getElementById('sum-yellow').textContent = `🟡 观望：${summary.yellow_count || 0} 只`;
-  document.getElementById('sum-red').textContent = `🔴 不建议：${summary.red_count || 0} 只`;
-  document.getElementById('summary-bar').style.display = 'flex';
+  document.getElementById('sum-green').textContent = '🟢 可买入：' + (summary.green_count || 0) + ' 只';
+  document.getElementById('sum-yellow').textContent = '🟡 观望：' + (summary.yellow_count || 0) + ' 只';
+  document.getElementById('sum-red').textContent = '🔴 不建议：' + (summary.red_count || 0) + ' 只';
+  document.getElementById('hs300-stats').style.display = 'flex';
 
   // 3. 板块
   const cats = data.categories || {};
