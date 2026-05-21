@@ -454,7 +454,7 @@ function getCategoryStrategy(title, stocks) {
   const itemsHtml = items.map(function(it) {
     return '<div class="strategy-item ' + it.cls + '">• ' + it.icon + ' ' + it.text + '</div>';
   }).join('');
-  return '<div class="strategy-box"><div class="strategy-title">' + title + '（' + count + ' 只）策略：</div>' + itemsHtml + '</div>';
+  return '<div class="strategy-box"><div class="strategy-title">' + title + '股票策略：</div>' + itemsHtml + '</div>';
 }
 
 /* ========== 渲染板块 ========== */
