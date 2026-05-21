@@ -1,0 +1,63 @@
+name: 更新股票监测数据
+
+# 触发条件：
+# 1. 定时触发：交易日每天 10:00 和 14:00（北京时间）各运行一次
+#    GitHub Actions 使用 UTC 时间，北京 UTC+8，所以：
+#      北京 10:00 = UTC 02:00
+#      北京 14:00 = UTC 06:00
+#    仅在周一至周五运行
+# 2. 手动触发：在 GitHub Actions 页面点击 "Run workflow"
+on:
+  schedule:
+    - cron: '0 2,6 * * 1-5'   # 每天两档（UTC 2点和6点 = 北京10点和14点），仅工作日
+  workflow_dispatch:        # 允许手动触发
+
+# 赋予 GITHUB_TOKEN 写入权限（用于提交 data.json）
+permissions:
+  contents: write
+
+jobs:
+  update-data:
+    runs-on: ubuntu-latest
+    # 仅在默认分支运行，避免 PR 触发时重复运行
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    steps:
+      - name: 📥 检出仓库代码
+        uses: actions/checkout@v4
+        with:
+          # 保留 commit 历史，方便追溯数据变化
+          fetch-depth: 0
+
+      - name: 🐍 设置 Python 环境
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: 📦 安装 Python 依赖
+        run: |
+          pip install -r requirements.txt
+
+      - name: 📡 运行监测脚本（生成 data.json）
+        run: |
+          python stock_monitor.py
+        env:
+          # 确保 akshare 不走代理（GitHub Actions 环境无需代理）
+          NO_PROXY: '*'
+          no_proxy: '*'
+
+      - name: 💾 提交并更新 data.json
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data.json
+          # 仅当有变化时才提交（避免无意义的历史记录）
+          if git diff --staged --quiet; then
+            echo "📊 数据无变化，跳过提交"
+          else
+            git commit -m "📊 自动更新股票监测数据 $(date +'%Y-%m-%d %H:%M')"
+            git push
+            echo "✅ data.json 已自动提交并推送"
+          fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🏦 A股15只赚钱天团股票监测面板</title>
+  <style>
+    /* ============================================================
+       全局样式 — 深色主题，清爽无广告
+       ============================================================ */
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+      background: #0f1117;
+      color: #e0e0e0;
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+    a { color: #58a6ff; text-decoration: none; }
+
+    /* ---------- 顶部栏 ---------- */
+    .header {
+      background: linear-gradient(135deg, #161b22 0%, #0d1117 100%);
+      border-bottom: 1px solid #30363d;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #f0f6ff;
+    }
+    .header h1 span { color: #ff9f43; }
+    .header-meta {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 13px;
+      color: #8b949e;
+    }
+    .refresh-btn {
+      background: #238636;
+      color: #fff;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 13px;
+    }
+    .refresh-btn:hover { background: #2ea043; }
+    .refresh-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ---------- 大盘监测卡片 ---------- */
+    .hs300-card {
+      margin: 20px 24px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 20px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+    .hs300-card.panic {
+      border-color: #ff4d4f;
+      background: linear-gradient(135deg, #2d0a0a 0%, #161b22 100%);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255,77,79,0.3); }
+      50% { box-shadow: 0 0 0 8px rgba(255,77,79,0); }
+    }
+    .hs300-info { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
+    .hs300-price { font-size: 32px; font-weight: 800; color: #f0f6ff; }
+    .hs300-change {
+      font-size: 20px; font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 6px;
+    }
+    .hs300-change.up { color: #ff4d4f; background: rgba(255,77,79,0.12); }
+    .hs300-change.down { color: #00e676; background: rgba(0,230,118,0.12); }
+    .hs300-change.flat { color: #8b949e; }
+    .hs300-badge {
+      font-size: 13px;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 600;
+    }
+    .hs300-badge.panic-badge {
+      background: rgba(255,77,79,0.18);
+      color: #ff6b6b;
+      border: 1px solid rgba(255,77,79,0.4);
+    }
+    .hs300-badge.normal-badge {
+      background: rgba(88,166,255,0.12);
+      color: #58a6ff;
+      border: 1px solid rgba(88,166,255,0.3);
+    }
+    .hs300-reason { font-size: 13px; color: #8b949e; margin-top: 4px; }
+
+    /* ---------- 摘要统计 ---------- */
+    .summary-bar {
+      display: flex;
+      gap: 16px;
+      padding: 0 24px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+    .summary-item {
+      font-size: 14px;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-weight: 600;
+    }
+    .summary-item.green { background: rgba(0,200,83,0.12); color: #00c853; border: 1px solid rgba(0,200,83,0.3); }
+    .summary-item.yellow { background: rgba(255,171,0,0.12); color: #ffab00; border: 1px solid rgba(255,171,0,0.3); }
+    .summary-item.red { background: rgba(255,23,68,0.12); color: #ff1744; border: 1px solid rgba(255,23,68,0.3); }
+
+    /* ---------- 板块分区 ---------- */
+    .category-section {
+      margin: 0 24px 28px 24px;
+    }
+    .category-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: #f0f6ff;
+      margin-bottom: 12px;
+      padding-left: 12px;
+      border-left: 4px solid #58a6ff;
+    }
+    .stocks-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+      gap: 12px;
+    }
+
+    /* ---------- 股票卡片 ---------- */
+    .stock-card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 16px;
+      transition: border-color 0.2s;
+      position: relative;
+      overflow: hidden;
+    }
+    .stock-card:hover { border-color: #58a6ff; }
+    .stock-card.signal-green { border-left: 4px solid #00c853; }
+    .stock-card.signal-yellow { border-left: 4px solid #ffab00; }
+    .stock-card.signal-red { border-left: 4px solid #ff1744; }
+
+    .stock-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .stock-name { font-size: 16px; font-weight: 700; color: #f0f6ff; }
+    .stock-code { font-size: 12px; color: #8b949e; margin-left: 8px; }
+    .signal-badge {
+      font-size: 12px;
+      padding: 2px 10px;
+      border-radius: 12px;
+      font-weight: 600;
+    }
+    .signal-badge.green { background: rgba(0,200,83,0.15); color: #00c853; }
+    .signal-badge.yellow { background: rgba(255,171,0,0.15); color: #ffab00; }
+    .signal-badge.red { background: rgba(255,23,68,0.15); color: #ff1744; }
+
+    .stock-price-row {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .stock-price { font-size: 24px; font-weight: 800; color: #f0f6ff; }
+    .stock-change { font-size: 14px; font-weight: 600; }
+    .stock-change.up { color: #ff4d4f; }
+    .stock-change.down { color: #00e676; }
+    .stock-change.flat { color: #8b949e; }
+
+    /* 估值数据网格 */
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px 16px;
+      margin-bottom: 10px;
+      font-size: 13px;
+    }
+    .metric-item { display: flex; justify-content: space-between; }
+    .metric-label { color: #8b949e; }
+    .metric-value { color: #e0e0e0; font-weight: 600; }
+    .metric-value.good { color: #00c853; }
+    .metric-value.warn { color: #ffab00; }
+    .metric-value.bad { color: #ff1744; }
+
+    /* 股息率进度条 */
+    .yield-bar-wrap {
+      margin-bottom: 10px;
+    }
+    .yield-bar-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      margin-bottom: 4px;
+    }
+    .yield-bar-outer {
+      height: 6px;
+      background: #21262d;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .yield-bar-inner {
+      height: 100%;
+      border-radius: 3px;
+      transition: width 0.5s;
+    }
+    .yield-bar-inner.high { background: #00c853; }
+    .yield-bar-inner.mid { background: #ffab00; }
+    .yield-bar-inner.low { background: #ff1744; }
+
+    /* 操作建议 */
+    .advice-box {
+      font-size: 13px;
+      font-weight: 600;
+      padding: 6px 12px;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      text-align: center;
+    }
+    .advice-box.green { background: rgba(0,200,83,0.12); color: #00c853; }
+    .advice-box.yellow { background: rgba(255,171,0,0.12); color: #ffab00; }
+    .advice-box.red { background: rgba(255,23,68,0.12); color: #ff1744; }
+
+    /* 信号原因列表 */
+    .reasons-list {
+      list-style: none;
+      font-size: 12px;
+      color: #8b949e;
+      line-height: 1.8;
+    }
+
+    /* ---------- Loading / Error ---------- */
+    .loading-box {
+      text-align: center;
+      padding: 60px 20px;
+      color: #8b949e;
+      font-size: 15px;
+    }
+    .error-box {
+      margin: 20px 24px;
+      background: rgba(255,77,79,0.08);
+      border: 1px solid rgba(255,77,79,0.3);
+      border-radius: 10px;
+      padding: 16px 20px;
+      color: #ff6b6b;
+      font-size: 14px;
+    }
+
+    /* ---------- 页脚 ---------- */
+    .footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 12px;
+      color: #484f58;
+      border-top: 1px solid #21262d;
+      margin-top: 20px;
+    }
+
+    /* ---------- 响应式 ---------- */
+    @media (max-width: 768px) {
+      .header { padding: 12px 16px; }
+      .header h1 { font-size: 16px; }
+      .hs300-card { margin: 12px 16px; padding: 14px 16px; }
+      .hs300-price { font-size: 24px; }
+      .summary-bar { padding: 0 16px; }
+      .category-section { margin: 0 16px 24px 16px; }
+      .stocks-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ========== 顶部栏 ========== -->
+<div class="header">
+  <h1>🏦 A股<span>15只赚钱天团</span>股票监测面板</h1>
+  <div class="header-meta">
+    <span id="update-time">加载中...</span>
+    <button class="refresh-btn" id="refresh-btn" onclick="loadData()">🔄 手动刷新</button>
+  </div>
+</div>
+
+<!-- ========== 大盘监测 ========== -->
+<div class="hs300-card" id="hs300-card">
+  <div>
+    <div class="hs300-info">
+      <span style="font-size:15px;color:#8b949e;">沪深300</span>
+      <span class="hs300-price" id="hs300-price">--</span>
+      <span class="hs300-change" id="hs300-change">--</span>
+    </div>
+    <div class="hs300-reason" id="hs300-reason"></div>
+  </div>
+  <div class="hs300-badge normal-badge" id="hs300-badge">监测中...</div>
+</div>
+
+<!-- ========== 摘要统计 ========== -->
+<div class="summary-bar" id="summary-bar" style="display:none;">
+  <div class="summary-item green" id="sum-green">🟢 可买入：0 只</div>
+  <div class="summary-item yellow" id="sum-yellow">🟡 观望：0 只</div>
+  <div class="summary-item red" id="sum-red">🔴 不建议：0 只</div>
+</div>
+
+<!-- ========== 内容容器 ========== -->
+<div id="content"></div>
+
+<!-- ========== 加载/错误状态 ========== -->
+<div class="loading-box" id="loading-box">📡 正在加载数据，请稍候...</div>
+<div class="error-box" id="error-box" style="display:none;"></div>
+
+<!-- ========== 页脚 ========== -->
+<div class="footer">
+  数据来源：akshare（东方财富）｜更新频率：每天 10:00 和 14:00（北京时间）自动更新｜仅供学习参考，不构成投资建议
+</div>
+
+<script>
+/* ============================================================
+   核心 JS — 读取 data.json，渲染面板
+   ============================================================ */
+let CACHED_DATA = null;
+
+// 颜色映射（A股规则：涨=红，跌=绿）
+function getChangeClass(val) {
+  if (val === null || val === undefined || isNaN(val)) return 'flat';
+  if (val > 0) return 'up';    // 涨 → 红
+  if (val < 0) return 'down';  // 跌 → 绿
+  return 'flat';
+}
+function getChangeText(val) {
+  if (val === null || val === undefined || isNaN(val)) return '--';
+  return (val > 0 ? '+' : '') + val.toFixed(2) + '%';
+}
+
+// 信号对应 CSS 类
+function signalClass(s) { return 'signal-' + (s || 'red'); }
+function badgeClass(s) { return s || 'red'; }
+function adviceClass(s) { return s || 'red'; }
+
+// 股息率进度条颜色
+function yieldBarClass(yieldVal, targetVal) {
+  if (yieldVal === null || yieldVal === undefined) return 'low';
+  if (yieldVal >= targetVal * 0.9) return 'high';
+  if (yieldVal >= targetVal * 0.6) return 'mid';
+  return 'low';
+}
+function yieldBarWidth(yieldVal, targetVal) {
+  if (!yieldVal || !targetVal) return 0;
+  return Math.min(100, (yieldVal / targetVal) * 100).toFixed(0);
+}
+
+// 格式化大数字（亿）
+function fmtBillion(val) {
+  if (!val || isNaN(val)) return '--';
+  if (val >= 1e8) return (val / 1e8).toFixed(1) + ' 亿';
+  if (val >= 1e4) return (val / 1e4).toFixed(1) + ' 万';
+  return val.toFixed(0);
+}
+
+// 估值高低判断样式
+function peClass(pe, category) {
+  if (pe === null || pe === undefined || isNaN(pe)) return '';
+  if (category === '银行' && pe < 5) return 'good';
+  if (category === '成长股' && pe < 15) return 'good';
+  if (category === '保险' && pe < 10) return 'good';
+  if (pe < 0) return 'bad';
+  return '';
+}
+function pbClass(pb) {
+  if (pb === null || pb === undefined || isNaN(pb)) return '';
+  if (pb < 0.65) return 'good';
+  if (pb < 1.0) return 'warn';
+  return '';
+}
+
+/* ========== 渲染板块 ========== */
+function renderCategory(title, stocks) {
+  let html = `<div class="category-section">
+    <div class="category-title">${title}（${stocks.length} 只）</div>
+    <div class="stocks-grid">`;
+
+  for (const s of stocks) {
+    const changeCls = getChangeClass(s.change_pct);
+    const changeTxt = getChangeText(s.change_pct);
+    const sig = s.signal || 'red';
+    const yieldVal = s.dividend_yield_real;
+    const targetVal = s.dividend_yield_target;
+    const yieldPct = yieldBarWidth(yieldVal, targetVal);
+    const yieldCls = yieldBarClass(yieldVal, targetVal);
+
+    const reasonsHtml = (s.reasons && s.reasons.length > 0)
+      ? '<ul class="reasons-list">' + s.reasons.map(r => `<li>• ${r}</li>`).join('') + '</ul>'
+      : '';
+
+    html += `
+      <div class="stock-card ${signalClass(sig)}">
+        <div class="stock-header">
+          <div>
+            <span class="stock-name">${s.name}</span>
+            <span class="stock-code">${s.code}</span>
+          </div>
+          <span class="signal-badge ${badgeClass(sig)}">
+            ${sig === 'green' ? '🟢 可买入' : sig === 'yellow' ? '🟡 观望' : '🔴 不建议'}
+          </span>
+        </div>
+
+        <div class="stock-price-row">
+          <span class="stock-price">${(s.price !== null && s.price !== undefined) ? s.price.toFixed(2) : '--'}</span>
+          <span class="stock-change ${changeCls}">${changeTxt}</span>
+        </div>
+
+        <div class="metrics-grid">
+          <div class="metric-item">
+            <span class="metric-label">PE（动态）</span>
+            <span class="metric-value ${peClass(s.pe, s.category)}">${s.pe !== null ? s.pe.toFixed(2) : '--'}</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">PB（市净率）</span>
+            <span class="metric-value ${pbClass(s.pb)}">${s.pb !== null ? s.pb.toFixed(2) : '--'}</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">实时股息率</span>
+            <span class="metric-value">${yieldVal !== null ? yieldVal.toFixed(2) + '%' : '--'}</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">目标股息率</span>
+            <span class="metric-value">${targetVal !== null ? targetVal.toFixed(2) + '%' : '--'}</span>
+          </div>
+        </div>
+
+        <div class="yield-bar-wrap">
+          <div class="yield-bar-label">
+            <span>股息率进度（相对目标）</span>
+            <span>${yieldVal !== null ? yieldVal.toFixed(2) + '%' : '--'} / ${targetVal !== null ? targetVal.toFixed(2) + '%' : '--'}</span>
+          </div>
+          <div class="yield-bar-outer">
+            <div class="yield-bar-inner ${yieldCls}" style="width:${yieldPct}%"></div>
+          </div>
+        </div>
+
+        <div class="advice-box ${adviceClass(sig)}">${s.advice || '等待数据'}</div>
+        ${reasonsHtml}
+      </div>`;
+  }
+
+  html += `</div></div>`;
+  return html;
+}
+
+/* ========== 主渲染 ========== */
+function render(data) {
+  // 1. 大盘
+  const hs300 = data.hs300 || {};
+  document.getElementById('hs300-price').textContent = hs300.price !== null ? hs300.price.toFixed(2) : '--';
+  const changeElem = document.getElementById('hs300-change');
+  changeElem.textContent = getChangeText(hs300.change_pct);
+  changeElem.className = 'hs300-change ' + getChangeClass(hs300.change_pct);
+
+  const card = document.getElementById('hs300-card');
+  const badge = document.getElementById('hs300-badge');
+  if (hs300.panic_signal) {
+    card.classList.add('panic');
+    badge.className = 'hs300-badge panic-badge';
+    badge.textContent = '🔥 恐慌大跌！黄金买点';
+  } else {
+    card.classList.remove('panic');
+    badge.className = 'hs300-badge normal-badge';
+    badge.textContent = '大盘正常';
+  }
+  document.getElementById('hs300-reason').textContent = hs300.panic_reason || '';
+
+  // 2. 摘要
+  const summary = data.summary || {};
+  document.getElementById('sum-green').textContent = `🟢 可买入：${summary.green_count || 0} 只`;
+  document.getElementById('sum-yellow').textContent = `🟡 观望：${summary.yellow_count || 0} 只`;
+  document.getElementById('sum-red').textContent = `🔴 不建议：${summary.red_count || 0} 只`;
+  document.getElementById('summary-bar').style.display = 'flex';
+
+  // 3. 板块
+  const cats = data.categories || {};
+  let contentHtml = '';
+  const catOrder = ['银行', '能源通信', '保险', '成长股'];
+  for (const catName of catOrder) {
+    if (cats[catName] && cats[catName].length > 0) {
+      contentHtml += renderCategory(catName, cats[catName]);
+    }
+  }
+  document.getElementById('content').innerHTML = contentHtml;
+
+  // 4. 更新时间
+  document.getElementById('update-time').textContent = '最后更新：' + (data.update_time || '--');
+  document.getElementById('loading-box').style.display = 'none';
+  document.getElementById('error-box').style.display = 'none';
+}
+
+/* ========== 加载数据 ========== */
+async function loadData() {
+  const btn = document.getElementById('refresh-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ 加载中...';
+  document.getElementById('loading-box').style.display = 'block';
+  document.getElementById('error-box').style.display = 'none';
+
+  try {
+    // 加时间戳防止缓存
+    const url = 'data.json?t=' + Date.now();
+    const resp = await fetch(url);
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    CACHED_DATA = data;
+    render(data);
+  } catch (err) {
+    console.error('加载数据失败：', err);
+    document.getElementById('loading-box').style.display = 'none';
+    document.getElementById('error-box').style.display = 'block';
+    document.getElementById('error-box').innerHTML =
+      '❌ 加载数据失败：' + err.message +
+      '<br><br>💡 请确保 <code>data.json</code> 已生成并放在与 index.html 同一目录下。<br>' +
+      '本地调试方法：在 <code>stock-monitor-workbuddy</code> 目录执行 <code>python -m http.server 8080</code>，然后访问 <code>http://localhost:8080</code>';
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🔄 手动刷新';
+  }
+}
+
+// 页面加载时自动拉取
+loadData();
+
+// 每5分钟自动刷新
+setInterval(loadData, 5 * 60 * 1000);
+</script>
+</body>
+</html>
