@@ -44,7 +44,6 @@ jobs:
         env:
           # 确保 akshare 不走代理（GitHub Actions 环境无需代理）
           NO_PROXY: '*'
-          no_proxy: '*'
 
       - name: 💾 提交并更新 data.json
         run: |
