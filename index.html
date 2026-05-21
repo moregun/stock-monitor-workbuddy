@@ -467,6 +467,9 @@ function renderCategory(title, stocks) {
   const countMap = {'银行': '9', '能源通信': '3', '保险': '2', '成长股': '1'};
   const count = countMap[title] || stocks.length;
 
+  // 保险板块增加PEV列
+  const showPEV = title === '保险';
+
   // 表头
   let rows = '';
   for (const s of stocks) {
@@ -480,34 +483,42 @@ function renderCategory(title, stocks) {
     const chgCls = s.change_pct > 0 ? 'chg-up' : s.change_pct < 0 ? 'chg-down' : 'chg-flat';
     const pbCls = pbClass(s.pb);
 
-    rows += '<tr class="sig-' + sig + '">' +
+    let row = '<tr class="sig-' + sig + '">' +
       '<td>' + s.code + '</td>' +
       '<td class="td-name">' + s.name + '</td>' +
       '<td>' + s.category + '</td>' +
       '<td>' + price + ' <span class="' + chgCls + '">' + (s.change_pct > 0 ? '+' : '') + chg + '</span></td>' +
       '<td>' + yieldVal + '%</td>' +
       '<td>' + pe + '</td>' +
-      '<td class="' + (pbCls === 'good' ? 'metric-value good' : pbCls === 'warn' ? 'metric-value warn' : '') + '">' + pb + '</td>' +
-      '<td><span class="sig-tag ' + sig + '">' + sigLabel + '</span></td>' +
+      '<td class="' + (pbCls === 'good' ? 'metric-value good' : pbCls === 'warn' ? 'metric-value warn' : '') + '">' + pb + '</td>';
+    if (showPEV) {
+      const pev = s.pev !== null && s.pev !== undefined ? s.pev.toFixed(2) : '--';
+      const pevCls = (s.pev !== null && s.pev < 0.7) ? 'metric-value good' : '';
+      row += '<td class="' + pevCls + '">' + pev + '</td>';
+    }
+    row += '<td><span class="sig-tag ' + sig + '">' + sigLabel + '</span></td>' +
       '</tr>';
+    rows += row;
   }
 
-  let html = '<div class="category-section">' +
-    '<div class="category-title">' + title + '（' + count + ' 只）</div>' +
-    getCategoryStrategy(title, stocks) +
-    '<table class="stock-table">' +
-    '<thead>' +
-    '<tr>' +
+  let thead = '<tr>' +
     '<th>代码</th>' +
     '<th>名称</th>' +
     '<th>类型</th>' +
     '<th>现价</th>' +
     '<th>股息率(%)</th>' +
     '<th>PE（动态）</th>' +
-    '<th>PB（市净率）</th>' +
-    '<th>买入信号</th>' +
-    '</tr>' +
-    '</thead>' +
+    '<th>PB（市净率）</th>';
+  if (showPEV) {
+    thead += '<th>PEV</th>';
+  }
+  thead += '<th>买入信号</th>' + '</tr>';
+
+  let html = '<div class="category-section">' +
+    '<div class="category-title">' + title + '（' + count + ' 只）</div>' +
+    getCategoryStrategy(title, stocks) +
+    '<table class="stock-table">' +
+    '<thead>' + thead + '</thead>' +
     '<tbody>' + rows + '</tbody>' +
     '</table>' +
     '</div>';
