@@ -475,9 +475,11 @@ function renderCategory(title, stocks) {
     const sigLabel = sig === 'green' ? '可买入' : sig === 'yellow' ? '观望' : '不建议';
     const price = (s.price !== null && s.price !== undefined) ? s.price.toFixed(2) : '--';
     const pe = s.pe !== null ? s.pe.toFixed(2) : '--';
+    const pb = s.pb !== null ? s.pb.toFixed(2) : '--';
     const yieldVal = s.dividend_yield_real !== null ? s.dividend_yield_real.toFixed(2) : '--';
     const chg = s.change_pct !== null && s.change_pct !== undefined ? s.change_pct.toFixed(2) + '%' : '--';
     const chgCls = s.change_pct > 0 ? 'chg-up' : s.change_pct < 0 ? 'chg-down' : 'chg-flat';
+    const pbCls = pbClass(s.pb);
 
     rows += '<tr class="sig-' + sig + '">' +
       '<td>' + s.code + '</td>' +
@@ -486,6 +488,7 @@ function renderCategory(title, stocks) {
       '<td>' + price + ' <span class="' + chgCls + '">' + (s.change_pct > 0 ? '+' : '') + chg + '</span></td>' +
       '<td>' + yieldVal + '%</td>' +
       '<td>' + pe + '</td>' +
+      '<td class="' + (pbCls === 'good' ? 'metric-value good' : pbCls === 'warn' ? 'metric-value warn' : '') + '">' + pb + '</td>' +
       '<td><span class="sig-tag ' + sig + '">' + sigLabel + '</span></td>' +
       '</tr>';
   }
@@ -502,6 +505,7 @@ function renderCategory(title, stocks) {
     '<th>现价</th>' +
     '<th>股息率(%)</th>' +
     '<th>PE（动态）</th>' +
+    '<th>PB</th>' +
     '<th>买入信号</th>' +
     '</tr>' +
     '</thead>' +
