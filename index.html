@@ -238,6 +238,30 @@
     .advice-box.yellow { background: rgba(255,171,0,0.12); color: #ffab00; }
     .advice-box.red { background: rgba(255,23,68,0.12); color: #ff1744; }
 
+    /* 板块策略说明 */
+    .strategy-box {
+      background: #1c2333;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 14px 18px;
+      margin-bottom: 14px;
+      font-size: 13px;
+      line-height: 2;
+    }
+    .strategy-box .strategy-title {
+      font-weight: 700;
+      color: #58a6ff;
+      margin-bottom: 6px;
+      font-size: 14px;
+    }
+    .strategy-box .strategy-item {
+      color: #c9d1d9;
+      padding-left: 2px;
+    }
+    .strategy-box .strategy-item.green-flag { color: #00c853; }
+    .strategy-box .strategy-item.yellow-flag { color: #ffab00; }
+    .strategy-box .strategy-item.blue-flag { color: #58a6ff; }
+
     /* 信号原因列表 */
     .reasons-list {
       list-style: none;
@@ -387,11 +411,101 @@ function pbClass(pb) {
   return '';
 }
 
+/* ========== 板块策略说明（动态读取实际值） ========== */
+function getCategoryStrategy(title, stocks) {
+  const countMap = {'银行': '9', '能源通信': '3', '保险': '2', '成长股': '1'};
+  const count = countMap[title] || stocks.length;
+  let items = [];
+
+  if (title === '银行') {
+    let bestPE = Infinity, bestPB = Infinity;
+    for (const s of stocks) {
+      if (s.pe !== null && s.pe < bestPE) bestPE = s.pe;
+      if (s.pb !== null && s.pb < bestPB) bestPB = s.pb;
+    }
+    if (bestPE < 5 && bestPB < 0.65) {
+      items.push({
+        icon: '💎',
+        text: '银行估值安全区：PE=' + bestPE.toFixed(2) + '＜5 且 PB=' + bestPB.toFixed(2) + '＜0.65，无脑买入线',
+        cls: 'green-flag'
+      });
+    } else {
+      items.push({
+        icon: '💎',
+        text: '银行估值安全区：PE＜5 且 PB＜0.65，无脑买入线',
+        cls: 'green-flag'
+      });
+    }
+    items.push({icon: '📅', text: '年底建仓期（10-12月），高股息股布局好时机', cls: 'blue-flag'});
+  }
+
+  if (title === '能源通信') {
+    let bestYield = -1;
+    for (const s of stocks) {
+      if (s.dividend_yield_real !== null && s.dividend_yield_real > bestYield) bestYield = s.dividend_yield_real;
+    }
+    if (bestYield > 6.0) {
+      items.push({
+        icon: '💰',
+        text: '股息率 ' + bestYield.toFixed(2) + '%＞6%，黄金坑',
+        cls: 'green-flag'
+      });
+    } else {
+      items.push({icon: '💰', text: '股息率＞6%，黄金坑', cls: 'green-flag'});
+    }
+    items.push({icon: '📅', text: '年底建仓期（10-12月），高股息股布局好时机', cls: 'blue-flag'});
+  }
+
+  if (title === '保险') {
+    let bestPEV = Infinity;
+    for (const s of stocks) {
+      let v = s.pev !== null ? s.pev : s.pe;
+      if (v !== null && v < bestPEV) bestPEV = v;
+    }
+    if (bestPEV < 0.7) {
+      items.push({
+        icon: '💎',
+        text: '保险PEV=' + bestPEV.toFixed(2) + '＜0.7，安全买入线',
+        cls: 'green-flag'
+      });
+    } else {
+      items.push({icon: '💎', text: '保险PEV＜0.7，安全买入线', cls: 'green-flag'});
+    }
+    items.push({icon: '📅', text: '年底建仓期（10-12月），高股息股布局好时机', cls: 'blue-flag'});
+  }
+
+  if (title === '成长股') {
+    let bestPE = Infinity;
+    for (const s of stocks) {
+      if (s.pe !== null && s.pe < bestPE) bestPE = s.pe;
+    }
+    if (bestPE < 15) {
+      items.push({
+        icon: '🚀',
+        text: '宁德时代PE=' + bestPE.toFixed(2) + '＜15，波段买入机会',
+        cls: 'yellow-flag'
+      });
+    } else {
+      items.push({icon: '🚀', text: '宁德时代PE＜15，波段买入机会', cls: 'yellow-flag'});
+    }
+    items.push({icon: '📅', text: '年底建仓期（10-12月），高股息股布局好时机', cls: 'blue-flag'});
+  }
+
+  if (items.length === 0) return '';
+  const itemsHtml = items.map(function(it) {
+    return '<div class="strategy-item ' + it.cls + '">• ' + it.icon + ' ' + it.text + '</div>';
+  }).join('');
+  return '<div class="strategy-box"><div class="strategy-title">' + title + '（' + count + ' 只）策略：</div>' + itemsHtml + '</div>';
+}
+
 /* ========== 渲染板块 ========== */
 function renderCategory(title, stocks) {
-  let html = `<div class="category-section">
-    <div class="category-title">${title}（${stocks.length} 只）</div>
-    <div class="stocks-grid">`;
+  const countMap = {'银行': '9', '能源通信': '3', '保险': '2', '成长股': '1'};
+  const count = countMap[title] || stocks.length;
+  let html = '<div class="category-section">' +
+    '<div class="category-title">' + title + '（' + count + ' 只）</div>' +
+    getCategoryStrategy(title, stocks) +
+    '<div class="stocks-grid">';
 
   for (const s of stocks) {
     const changeCls = getChangeClass(s.change_pct);
