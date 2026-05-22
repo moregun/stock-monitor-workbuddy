@@ -1,5 +1,5 @@
 {
-  "update_time": "2026-05-22 02:41:19",
+  "update_time": "2026-05-22 03:38:51",
   "data_date": "2026-05-22",
   "hs300": {
     "price": null,
@@ -25,7 +25,6 @@
         "dividend_yield_real": null,
         "dividend_yield_target": 5.62,
         "market_cap": null,
-        "error": "数据获取失败",
         "signal": "red",
         "score": 15,
         "reasons": [
@@ -45,7 +44,6 @@
         "dividend_yield_real": null,
         "dividend_yield_target": 5.21,
         "market_cap": null,
-        "error": "数据获取失败",
         "signal": "red",
         "score": 15,
         "reasons": [
@@ -65,7 +63,6 @@
         "dividend_yield_real": null,
         "dividend_yield_target": 5.17,
         "market_cap": null,
-        "error": "数据获取失败",
         "signal": "red",
         "score": 15,
         "reasons": [
@@ -85,7 +82,6 @@
         "dividend_yield_real": null,
         "dividend_yield_target": 4.61,
         "market_cap": null,
-        "error": "数据获取失败",
         "signal": "red",
         "score": 15,
         "reasons": [
@@ -105,7 +101,6 @@
         "dividend_yield_real": null,
         "dividend_yield_target": 4.22,
         "market_cap": null,
-        "error": "数据获取失败",
         "signal": "red",
         "score": 15,
         "reasons": [
@@ -125,7 +120,6 @@
         "dividend_yield_real": null,
         "dividend_yield_target": 4.05,
         "market_cap": null,
-        "error": "数据获取失败",
         "signal": "red",
         "score": 15,
         "reasons": [
@@ -145,7 +139,6 @@
         "dividend_yield_real": null,
         "dividend_yield_target": 3.97,
         "market_cap": null,
-        "error": "数据获取失败",
         "signal": "red",
         "score": 15,
         "reasons": [
@@ -165,7 +158,6 @@
         "dividend_yield_real": null,
         "dividend_yield_target": 3.43,
         "market_cap": null,
-        "error": "数据获取失败",
         "signal": "red",
         "score": 15,
         "reasons": [
@@ -185,7 +177,6 @@
         "dividend_yield_real": null,
         "dividend_yield_target": 2.85,
         "market_cap": null,
-        "error": "数据获取失败",
         "signal": "red",
         "score": 15,
         "reasons": [
@@ -207,7 +198,6 @@
         "dividend_yield_real": null,
         "dividend_yield_target": 7.85,
         "market_cap": null,
-        "error": "数据获取失败",
         "signal": "red",
         "score": 15,
         "reasons": [
@@ -227,7 +217,6 @@
         "dividend_yield_real": null,
         "dividend_yield_target": 6.28,
         "market_cap": null,
-        "error": "数据获取失败",
         "signal": "red",
         "score": 15,
         "reasons": [
@@ -247,7 +236,6 @@
         "dividend_yield_real": null,
         "dividend_yield_target": 4.83,
         "market_cap": null,
-        "error": "数据获取失败",
         "signal": "red",
         "score": 15,
         "reasons": [
@@ -269,11 +257,10 @@
         "dividend_yield_real": null,
         "dividend_yield_target": 3.86,
         "market_cap": null,
-        "error": "数据获取失败",
         "signal": "red",
-        "score": 0,
+        "score": 15,
         "reasons": [
-          "😴 当前无明显买入信号，建议观望"
+          "🎁 临近分红季（6-7月），现在布局可吃分红"
         ],
         "advice": "🔴 不建议（等待更好买点）"
       },
@@ -289,11 +276,10 @@
         "dividend_yield_real": null,
         "dividend_yield_target": 3.02,
         "market_cap": null,
-        "error": "数据获取失败",
         "signal": "red",
-        "score": 0,
+        "score": 15,
         "reasons": [
-          "😴 当前无明显买入信号，建议观望"
+          "🎁 临近分红季（6-7月），现在布局可吃分红"
         ],
         "advice": "🔴 不建议（等待更好买点）"
       }
@@ -311,11 +297,10 @@
         "dividend_yield_real": null,
         "dividend_yield_target": 0.41,
         "market_cap": null,
-        "error": "数据获取失败",
         "signal": "red",
-        "score": 0,
+        "score": 15,
         "reasons": [
-          "😴 当前无明显买入信号，建议观望"
+          "🎁 临近分红季（6-7月），现在布局可吃分红"
         ],
         "advice": "🔴 不建议（等待更好买点）"
       }
