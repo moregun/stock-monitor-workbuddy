@@ -1,15 +1,15 @@
 {
-  "update_time": "2026-05-22 03:38:51",
+  "update_time": "2026-05-22 05:57:41",
   "data_date": "2026-05-22",
   "hs300": {
-    "price": null,
-    "change_pct": null,
-    "volume": null,
-    "volume_20d_avg": null,
+    "price": 4838.5146,
+    "change_pct": 1.16,
+    "volume": 38.46,
+    "volume_20d_avg": 1.93,
     "volume_shrink": false,
-    "volume_shrink_reason": "",
+    "volume_shrink_reason": "成交额 38亿，近20日均值 2亿，未明显萎缩",
     "panic_signal": false,
-    "panic_reason": ""
+    "panic_reason": "沪深300涨跌幅 1.16%，未达恐慌线（-2.5%）"
   },
   "categories": {
     "银行": [
@@ -17,75 +17,75 @@
         "code": "601328",
         "name": "交通银行",
         "category": "银行",
-        "price": null,
-        "change_pct": null,
-        "pe": null,
-        "pb": null,
-        "pev": null,
-        "dividend_yield_real": null,
+        "price": 6.7,
+        "change_pct": 0.9,
+        "pe": 6.442308,
+        "pb": 0.50187266,
+        "pev": 0.50187266,
+        "dividend_yield_real": 5.32,
         "dividend_yield_target": 5.62,
-        "market_cap": null,
-        "signal": "red",
-        "score": 15,
+        "market_cap": 5920.37,
+        "signal": "yellow",
+        "score": 30,
         "reasons": [
-          "🎁 临近分红季（6-7月），现在布局可吃分红"
+          "✅ PB=0.50 < 0.65（破净）"
         ],
-        "advice": "🔴 不建议（等待更好买点）"
+        "advice": "🟡 观望"
       },
       {
         "code": "601166",
         "name": "兴业银行",
         "category": "银行",
-        "price": null,
-        "change_pct": null,
-        "pe": null,
-        "pb": null,
-        "pev": null,
-        "dividend_yield_real": null,
+        "price": 17.54,
+        "change_pct": 0.98,
+        "pe": 5.4812503,
+        "pb": 0.44585666,
+        "pev": 0.44585666,
+        "dividend_yield_real": 9.36,
         "dividend_yield_target": 5.21,
-        "market_cap": null,
-        "signal": "red",
-        "score": 15,
+        "market_cap": 3711.97,
+        "signal": "yellow",
+        "score": 30,
         "reasons": [
-          "🎁 临近分红季（6-7月），现在布局可吃分红"
+          "✅ PB=0.45 < 0.65（破净）"
         ],
-        "advice": "🔴 不建议（等待更好买点）"
+        "advice": "🟡 观望"
       },
       {
         "code": "601998",
         "name": "中信银行",
         "category": "银行",
-        "price": null,
-        "change_pct": null,
-        "pe": null,
-        "pb": null,
-        "pev": null,
-        "dividend_yield_real": null,
+        "price": 7.79,
+        "change_pct": -1.14,
+        "pe": 6.4916663,
+        "pb": 0.5113562,
+        "pev": 0.5113562,
+        "dividend_yield_real": 4.57,
         "dividend_yield_target": 5.17,
-        "market_cap": null,
-        "signal": "red",
-        "score": 15,
+        "market_cap": 4334.76,
+        "signal": "yellow",
+        "score": 30,
         "reasons": [
-          "🎁 临近分红季（6-7月），现在布局可吃分红"
+          "✅ PB=0.51 < 0.65（破净）"
         ],
-        "advice": "🔴 不建议（等待更好买点）"
+        "advice": "🟡 观望"
       },
       {
         "code": "601288",
         "name": "农业银行",
         "category": "银行",
-        "price": null,
-        "change_pct": null,
-        "pe": null,
-        "pb": null,
-        "pev": null,
-        "dividend_yield_real": null,
+        "price": 6.49,
+        "change_pct": -0.31,
+        "pe": 8.215189,
+        "pb": 0.8036156,
+        "pev": 0.8036156,
+        "dividend_yield_real": 3.83,
         "dividend_yield_target": 4.61,
-        "market_cap": null,
+        "market_cap": 22713.9,
         "signal": "red",
-        "score": 15,
+        "score": 0,
         "reasons": [
-          "🎁 临近分红季（6-7月），现在布局可吃分红"
+          "😴 当前无明显买入信号，建议观望"
         ],
         "advice": "🔴 不建议（等待更好买点）"
       },
@@ -93,37 +93,37 @@
         "code": "601398",
         "name": "工商银行",
         "category": "银行",
-        "price": null,
-        "change_pct": null,
-        "pe": null,
-        "pb": null,
-        "pev": null,
-        "dividend_yield_real": null,
+        "price": 7.19,
+        "change_pct": 0.56,
+        "pe": 7.118812,
+        "pb": 0.64997286,
+        "pev": 0.64997286,
+        "dividend_yield_real": 4.34,
         "dividend_yield_target": 4.22,
-        "market_cap": null,
-        "signal": "red",
-        "score": 15,
+        "market_cap": 25625.61,
+        "signal": "yellow",
+        "score": 30,
         "reasons": [
-          "🎁 临近分红季（6-7月），现在布局可吃分红"
+          "✅ PB=0.65 < 0.65（破净）"
         ],
-        "advice": "🔴 不建议（等待更好买点）"
+        "advice": "🟡 观望"
       },
       {
         "code": "601939",
         "name": "建设银行",
         "category": "银行",
-        "price": null,
-        "change_pct": null,
-        "pe": null,
-        "pb": null,
-        "pev": null,
-        "dividend_yield_real": null,
+        "price": 10.12,
+        "change_pct": 0.7,
+        "pe": 7.7846155,
+        "pb": 0.7463127,
+        "pev": 0.7463127,
+        "dividend_yield_real": 3.9,
         "dividend_yield_target": 4.05,
-        "market_cap": null,
+        "market_cap": 26473.96,
         "signal": "red",
-        "score": 15,
+        "score": 0,
         "reasons": [
-          "🎁 临近分红季（6-7月），现在布局可吃分红"
+          "😴 当前无明显买入信号，建议观望"
         ],
         "advice": "🔴 不建议（等待更好买点）"
       },
@@ -131,18 +131,18 @@
         "code": "601988",
         "name": "中国银行",
         "category": "银行",
-        "price": null,
-        "change_pct": null,
-        "pe": null,
-        "pb": null,
-        "pev": null,
-        "dividend_yield_real": null,
+        "price": 5.86,
+        "change_pct": 1.03,
+        "pe": 7.918919,
+        "pb": 0.6907934,
+        "pev": 0.6907934,
+        "dividend_yield_real": 3.98,
         "dividend_yield_target": 3.97,
-        "market_cap": null,
+        "market_cap": 18881.65,
         "signal": "red",
-        "score": 15,
+        "score": 0,
         "reasons": [
-          "🎁 临近分红季（6-7月），现在布局可吃分红"
+          "😴 当前无明显买入信号，建议观望"
         ],
         "advice": "🔴 不建议（等待更好买点）"
       },
@@ -150,117 +150,59 @@
         "code": "601658",
         "name": "邮储银行",
         "category": "银行",
-        "price": null,
-        "change_pct": null,
-        "pe": null,
-        "pb": null,
-        "pev": null,
-        "dividend_yield_real": null,
+        "price": 4.94,
+        "change_pct": 0.41,
+        "pe": 6.767123,
+        "pb": 0.57461905,
+        "pev": 0.57461905,
+        "dividend_yield_real": 4.82,
         "dividend_yield_target": 3.43,
-        "market_cap": null,
-        "signal": "red",
-        "score": 15,
+        "market_cap": 5932.7,
+        "signal": "yellow",
+        "score": 30,
         "reasons": [
-          "🎁 临近分红季（6-7月），现在布局可吃分红"
+          "✅ PB=0.57 < 0.65（破净）"
         ],
-        "advice": "🔴 不建议（等待更好买点）"
+        "advice": "🟡 观望"
       },
       {
         "code": "600036",
         "name": "招商银行",
         "category": "银行",
-        "price": null,
-        "change_pct": null,
-        "pe": null,
-        "pb": null,
-        "pev": null,
-        "dividend_yield_real": null,
+        "price": 37.2,
+        "change_pct": 0.13,
+        "pe": 6.5148864,
+        "pb": 0.8285078,
+        "pev": 0.8285078,
+        "dividend_yield_real": 8.11,
         "dividend_yield_target": 2.85,
-        "market_cap": null,
+        "market_cap": 9381.78,
         "signal": "red",
-        "score": 15,
+        "score": 0,
         "reasons": [
-          "🎁 临近分红季（6-7月），现在布局可吃分红"
+          "😴 当前无明显买入信号，建议观望"
         ],
         "advice": "🔴 不建议（等待更好买点）"
       }
     ],
-    "能源通信": [
-      {
-        "code": "600941",
-        "name": "中国移动",
-        "category": "通信",
-        "price": null,
-        "change_pct": null,
-        "pe": null,
-        "pb": null,
-        "pev": null,
-        "dividend_yield_real": null,
-        "dividend_yield_target": 7.85,
-        "market_cap": null,
-        "signal": "red",
-        "score": 15,
-        "reasons": [
-          "🎁 临近分红季（6-7月），现在布局可吃分红"
-        ],
-        "advice": "🔴 不建议（等待更好买点）"
-      },
-      {
-        "code": "600938",
-        "name": "中国海油",
-        "category": "能源",
-        "price": null,
-        "change_pct": null,
-        "pe": null,
-        "pb": null,
-        "pev": null,
-        "dividend_yield_real": null,
-        "dividend_yield_target": 6.28,
-        "market_cap": null,
-        "signal": "red",
-        "score": 15,
-        "reasons": [
-          "🎁 临近分红季（6-7月），现在布局可吃分红"
-        ],
-        "advice": "🔴 不建议（等待更好买点）"
-      },
-      {
-        "code": "601857",
-        "name": "中国石油",
-        "category": "能源",
-        "price": null,
-        "change_pct": null,
-        "pe": null,
-        "pb": null,
-        "pev": null,
-        "dividend_yield_real": null,
-        "dividend_yield_target": 4.83,
-        "market_cap": null,
-        "signal": "red",
-        "score": 15,
-        "reasons": [
-          "🎁 临近分红季（6-7月），现在布局可吃分红"
-        ],
-        "advice": "🔴 不建议（等待更好买点）"
-      }
-    ],
+    "能源通信": [],
     "保险": [
       {
         "code": "601318",
         "name": "中国平安",
         "category": "保险",
-        "price": null,
-        "change_pct": null,
-        "pe": null,
-        "pb": null,
-        "pev": null,
-        "dividend_yield_real": null,
+        "price": 53.8,
+        "change_pct": 0.07,
+        "pe": 7.4206896,
+        "pb": 0.95668256,
+        "pev": 0.95668256,
+        "dividend_yield_real": 5.02,
         "dividend_yield_target": 3.86,
-        "market_cap": null,
+        "market_cap": 9741.91,
         "signal": "red",
-        "score": 15,
+        "score": 0,
         "reasons": [
-          "🎁 临近分红季（6-7月），现在布局可吃分红"
+          "😴 当前无明显买入信号，建议观望"
         ],
         "advice": "🔴 不建议（等待更好买点）"
       },
@@ -268,18 +210,18 @@
         "code": "601628",
         "name": "中国人寿",
         "category": "保险",
-        "price": null,
-        "change_pct": null,
-        "pe": null,
-        "pb": null,
-        "pev": null,
-        "dividend_yield_real": null,
+        "price": 33.86,
+        "change_pct": -0.56,
+        "pe": 6.6132817,
+        "pb": 1.5997354,
+        "pev": 1.5997354,
+        "dividend_yield_real": 2.51,
         "dividend_yield_target": 3.02,
-        "market_cap": null,
+        "market_cap": 9570.43,
         "signal": "red",
-        "score": 15,
+        "score": 0,
         "reasons": [
-          "🎁 临近分红季（6-7月），现在布局可吃分红"
+          "😴 当前无明显买入信号，建议观望"
         ],
         "advice": "🔴 不建议（等待更好买点）"
       }
@@ -289,18 +231,18 @@
         "code": "300750",
         "name": "宁德时代",
         "category": "成长股",
-        "price": null,
-        "change_pct": null,
-        "pe": null,
-        "pb": null,
-        "pev": null,
-        "dividend_yield_real": null,
+        "price": 413.46,
+        "change_pct": 0.44,
+        "pe": 23.572405,
+        "pb": 5.2401047,
+        "pev": 5.2401047,
+        "dividend_yield_real": 1.35,
         "dividend_yield_target": 0.41,
-        "market_cap": null,
+        "market_cap": 19128.77,
         "signal": "red",
-        "score": 15,
+        "score": 0,
         "reasons": [
-          "🎁 临近分红季（6-7月），现在布局可吃分红"
+          "😴 当前无明显买入信号，建议观望"
         ],
         "advice": "🔴 不建议（等待更好买点）"
       }
@@ -309,7 +251,7 @@
   "summary": {
     "total_stocks": 15,
     "green_count": 0,
-    "yellow_count": 0,
-    "red_count": 15
+    "yellow_count": 5,
+    "red_count": 10
   }
 }
