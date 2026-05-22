@@ -2,8 +2,8 @@
 # -*- coding: utf-8 -*-
 """
 A股15只赚钱天团股票监测面板
-数据源：akshare（东方财富）
-功能：抓取15只巨无霸股票实时数据 + 沪深300大盘数据，计算4大买入窗口信号，输出 data.json
+数据源：akshare（东方财富 + 腾讯财经备用）
+功能：抓取15只股票实时数据 + 沪深300大盘数据，计算买入信号，输出 data.json
 用法：pip install akshare pandas && python stock_monitor.py
 更新频率：由 GitHub Actions 定时触发，每天 10:00 和 14:00（北京时间）各运行一次
 """
@@ -15,6 +15,7 @@ import datetime
 import time
 import os
 import sys
+import threading
 
 # 绕过代理（避免公司网络/代理导致 akshare 请求失败）
 os.environ['NO_PROXY'] = '*'
@@ -24,7 +25,36 @@ os.environ.pop('http_proxy', None)
 os.environ.pop('https_proxy', None)
 
 # ============================================================
-# 一、股票清单（固定15只，严格按照用户提供的清单）
+# 超时控制：让 API 调用在指定秒数后放弃
+# ============================================================
+def call_with_timeout(func, timeout_sec=20):
+    """
+    在线程中运行 func，timeout_sec 秒后放弃等待。
+    返回 func 的结果，或 None（超时/异常）。
+    """
+    result = [None]
+    exc = [None]
+
+    def worker():
+        try:
+            result[0] = func()
+        except Exception as e:
+            exc[0] = e
+
+    t = threading.Thread(target=worker, daemon=True)
+    t.start()
+    t.join(timeout=timeout_sec)
+
+    if t.is_alive():
+        print(f"   ⚠️  请求超时（>{timeout_sec}s），放弃")
+        return None
+    if exc[0] is not None:
+        print(f"   ❌ 请求异常: {exc[0]}")
+        return None
+    return result[0]
+
+# ============================================================
+# 一、股票清单（固定15只）
 # ============================================================
 STOCK_LIST = [
     {"code": "600941", "name": "中国移动", "dividend_yield_target": 7.85, "category": "通信"},
@@ -57,174 +87,242 @@ CATEGORY_GROUPS = {
 # ============================================================
 
 def safe_float(val, default=None):
-    """安全转换为 float，失败返回 default"""
     try:
-        if val is None or val == "" or str(val).strip() in ["-", "None", "nan"]:
+        if val is None or val == "" or str(val).strip() in ["-", "None", "nan", "NaN"]:
             return default
         return float(val)
     except (ValueError, TypeError):
         return default
 
 
+def retry_call(func, max_retries=3, sleep_sec=2):
+    """带重试的 API 调用"""
+    for i in range(max_retries):
+        try:
+            result = func()
+            return result
+        except Exception as e:
+            print(f"   ⚠️  第{i+1}次重试失败: {e}")
+            if i < max_retries - 1:
+                time.sleep(sleep_sec)
+            else:
+                print(f"   ❌ 已重试 {max_retries} 次，放弃")
+                return None
+
+
 def get_realtime_data():
     """
-    获取全部A股实时行情（来自东方财富）
-    返回：DataFrame，全部A股实时行情
+    获取全部A股实时行情（东方财富）
+    在 GitHub Actions（境外）环境中直接返回 None，跳过主方案
+    本地环境带超时控制（20秒），失败时使用逐只股票备用方案
     """
-    print("📡 正在获取A股实时行情（东方财富）...")
-    try:
-        # stock_zh_a_spot_em 返回沪深京A股实时行情，字段包括：
-        # 代码, 名称, 最新价, 涨跌幅, 涨跌额, 成交量, 成交额, 振幅,
-        # 最高, 最低, 今开, 昨收, 换手率, 市盈率-动态, 市净率, 总市值, 流通市值, 股息率
-        df = ak.stock_zh_a_spot_em()
+    # 检测是否在 GitHub Actions 环境中运行（境外服务器无法访问东方财富API）
+    if os.environ.get('GITHUB_ACTIONS') == 'true':
+        print("   📡 检测到 GitHub Actions 环境（境外），跳过方案1，直接使用备用方案")
+        return None
+
+    print("📡 方案1：正在获取A股实时行情（东方财富）...")
+    df = call_with_timeout(lambda: ak.stock_zh_a_spot_em(), timeout_sec=20)
+    if df is not None and not df.empty:
         print(f"   ✅ 获取到 {len(df)} 只股票实时数据")
         return df
+    print("   ❌ 方案1失败（超时或异常），将使用逐只股票备用方案")
+    return None
+
+
+def get_stock_by_hist(code, name):
+    """
+    备用方案：用 stock_zh_a_hist 获取单只股票的最新数据
+    这个接口使用不同数据源，在境外服务器上更可靠
+    返回：dict with price, change_pct or None
+    """
+    try:
+        today = datetime.date.today()
+        start = (today - datetime.timedelta(days=5)).strftime("%Y%m%d")
+        end = today.strftime("%Y%m%d")
+        df = ak.stock_zh_a_hist(symbol=code, period="daily", start_date=start, end_date=end, adjust="qfq")
+        if df is None or df.empty:
+            return None
+        latest = df.iloc[-1]
+        # 用 收盘/开盘 估算涨跌幅
+        close_val = safe_float(latest.get("收盘") or latest.get("close"))
+        open_val = safe_float(latest.get("开盘") or latest.get("open"))
+        chg = round((close_val - open_val) / open_val * 100, 2) if close_val and open_val else None
+        return {
+            "price": close_val,
+            "change_pct": chg,
+            "pe": None,
+            "pb": None,
+            "dividend_yield": None,
+            "market_cap": None,
+        }
     except Exception as e:
-        print(f"   ❌ 获取实时行情失败: {e}")
+        print(f"   ⚠️  {code} {name} 备用方案失败: {e}")
+        return None
+
+
+def get_hs300_by_hist():
+    """
+    备用方案：用 stock_zh_index_daily_em 获取沪深300最新数据
+    这个接口使用不同数据源，在境外服务器上更可靠
+    """
+    try:
+        today = datetime.date.today()
+        start_date = (today - datetime.timedelta(days=5)).strftime("%Y%m%d")
+        end_date = today.strftime("%Y%m%d")
+        df = ak.stock_zh_index_daily_em(symbol="000300", start_date=start_date, end_date=end_date)
+        if df is None or df.empty:
+            return None
+        latest = df.iloc[-1]
+        # 兼容不同列名
+        close_val = safe_float(latest.get("收盘") or latest.get("close") or latest.get("指数收盘"))
+        open_val = safe_float(latest.get("开盘") or latest.get("open") or latest.get("指数开盘"))
+        vol_raw = safe_float(latest.get("成交额") or latest.get("volume"))
+        chg = round((close_val - open_val) / open_val * 100, 2) if close_val and open_val else None
+        result = {
+            "price": close_val,
+            "change_pct": chg,
+            "volume": round(vol_raw / 100000000, 2) if vol_raw else None,
+        }
+        print(f"   ✅ [备用] 沪深300 最新价={result['price']}, 涨跌幅={result['change_pct']}%")
+        return result
+    except Exception as e:
+        print(f"   ⚠️  沪深300 历史备用方案失败: {e}")
         return None
 
 
 def get_hs300_data():
     """
-    获取沪深300指数实时行情 + 历史数据（用于判断成交量和跌幅）
-    返回：dict，包含 hs300_change_pct, hs300_price, hs300_volume(亿元),
-                   hs300_volume_20d_avg(亿元), volume_shrink, panic_signal, panic_reason
+    获取沪深300指数实时行情 + 历史数据
+    优先用 stock_zh_index_spot_em（带超时），失败则用历史数据备用
     """
     print("📡 正在获取沪深300指数数据...")
     result = {
-        "hs300_change_pct": None,
-        "hs300_price": None,
-        "hs300_volume": None,         # 当日成交额（亿元）
-        "hs300_volume_20d_avg": None,  # 近20日平均成交额（亿元）
-        "volume_shrink": False,        # 成交量是否萎缩
-        "volume_shrink_reason": "",    # 萎缩原因说明
+        "price": None,
+        "change_pct": None,
+        "volume": None,
+        "volume_20d_avg": None,
+        "volume_shrink": False,
+        "volume_shrink_reason": "",
         "panic_signal": False,
         "panic_reason": "",
     }
+
+    # —— 步骤1：尝试获取实时行情（带超时）——
     try:
-        # 获取指数实时行情（东方财富）
-        df_index = ak.stock_zh_index_spot_em()
-        # 找到沪深300（代码 000300）
-        hs300_row = df_index[df_index["代码"] == "000300"]
-        if not hs300_row.empty:
-            row = hs300_row.iloc[0]
-            result["hs300_change_pct"] = safe_float(row.get("涨跌幅"))
-            result["hs300_price"] = safe_float(row.get("最新价"))
-            # 成交额（元）→ 亿元
-            vol_raw = safe_float(row.get("成交额"))
-            result["hs300_volume"] = round(vol_raw / 100000000, 2) if vol_raw else None
-            print(f"   ✅ 沪深300 最新价={result['hs300_price']}, 涨跌幅={result['hs300_change_pct']}%, 成交额={result['hs300_volume']}亿")
-
-        # 获取近30日沪深300历史数据，计算成交量均线 + 萎缩判断
-        try:
-            today = datetime.date.today()
-            start_date = (today - datetime.timedelta(days=35)).strftime("%Y%m%d")
-            end_date = today.strftime("%Y%m%d")
-            df_hist = ak.stock_zh_index_daily_em(symbol="000300", start_date=start_date, end_date=end_date)
-            if not df_hist.empty:
-                # 统一列名（不同版本 akshare 列名可能不同）
-                col_map = {}
-                for c in df_hist.columns:
-                    cl = c.strip().lower()
-                    if '日期' in cl or 'date' in cl:
-                        col_map['date'] = c
-                    if '成交' in cl or 'volume' in cl or 'vol' in cl:
-                        col_map['volume'] = c
-                    if '涨跌' in cl or 'change' in cl or '涨跌幅' in cl:
-                        col_map['change'] = c
-                date_col = col_map.get('date', df_hist.columns[0])
-                vol_col = col_map.get('volume', df_hist.columns[-2])
-                chg_col = col_map.get('change', df_hist.columns[2] if len(df_hist.columns) > 2 else df_hist.columns[-1])
-
-                df_hist[date_col] = pd.to_datetime(df_hist[date_col]).dt.strftime("%Y%m%d")
-                df_hist = df_hist.sort_values(date_col).reset_index(drop=True)
-
-                # 成交额转亿元
-                df_hist['_vol_yi'] = df_hist[vol_col].astype(float) / 100000000
-
-                # 最新一日数据
-                latest_row = df_hist.iloc[-1]
-                latest_volume_yi = float(latest_row['_vol_yi'])  # 亿元
-                latest_change = safe_float(latest_row.get(chg_col))
-
-                # 近20日均值（不含今天）
-                hist_20 = df_hist.iloc[-21:-1]
-                if len(hist_20) >= 5:
-                    avg_20 = hist_20['_vol_yi'].astype(float).mean()
-                    result["hs300_volume_20d_avg"] = round(avg_20, 2)
-
-                    # 萎缩判断（用户策略：低于20日均值50% 且 低于2000亿）
-                    shrink1 = latest_volume_yi < avg_20 * 0.5   # 低于20日均值50%
-                    shrink2 = latest_volume_yi < 2000      # 低于2000亿
-                    result["volume_shrink"] = shrink1 and shrink2
-                    if shrink1:
-                        result["volume_shrink_reason"] = f"成交额 {latest_volume_yi:.0f}亿 < 近20日均值({avg_20:.0f}亿)的50%"
-                    if shrink2:
-                        if result["volume_shrink_reason"]:
-                            result["volume_shrink_reason"] += "，且"
-                        result["volume_shrink_reason"] += f"成交额 {latest_volume_yi:.0f}亿 < 2000亿"
-                    if not result["volume_shrink"]:
-                        result["volume_shrink_reason"] = f"成交额 {latest_volume_yi:.0f}亿，近20日均值 {avg_20:.0f}亿，未明显萎缩"
-
-                    print(f"   ✅ 沪深300 最新成交额={latest_volume_yi:.0f}亿, 近20日均值={avg_20:.0f}亿, 萎缩={result['volume_shrink']}")
-
-                # 恐慌信号：跌幅>2.5% 且成交量萎缩
-                if result["hs300_change_pct"] is not None:
-                    change = result["hs300_change_pct"]
-                    condition1 = change < -2.5
-                    result["panic_signal"] = condition1  # 主要看跌幅，成交量作为辅助
-                    if condition1:
-                        reason = f"沪深300单日跌幅 {change:.2f}%（超过2.5%警戒线）"
-                        if result["volume_shrink"]:
-                            reason += "，且成交量萎缩"
-                        result["panic_reason"] = reason
-                    else:
-                        result["panic_reason"] = f"沪深300涨跌幅 {change:.2f}%，未达恐慌线（-2.5%）"
-
-        except Exception as e:
-            print(f"   ⚠️  获取沪深300历史数据失败（不影响主功能）: {e}")
-
-        return result
+        df_index = call_with_timeout(lambda: ak.stock_zh_index_spot_em(), timeout_sec=20)
+        if df_index is not None and not df_index.empty:
+            hs300_row = df_index[df_index["代码"] == "000300"]
+            if not hs300_row.empty:
+                row = hs300_row.iloc[0]
+                result["change_pct"] = safe_float(row.get("涨跌幅"))
+                result["price"] = safe_float(row.get("最新价"))
+                vol_raw = safe_float(row.get("成交额"))
+                result["volume"] = round(vol_raw / 100000000, 2) if vol_raw else None
+                print(f"   ✅ 沪深300 最新价={result['price']}, 涨跌幅={result['change_pct']}%, 成交额={result['volume']}亿")
     except Exception as e:
-        print(f"   ❌ 获取沪深300数据失败: {e}")
-        return result
+        print(f"   ⚠️  实时行情获取异常: {e}")
+
+    # —— 步骤2：实时行情失败，用历史数据补最新价 ——
+    if result["price"] is None:
+        hist_rt = get_hs300_by_hist()
+        if hist_rt:
+            result["price"] = hist_rt.get("price")
+            result["change_pct"] = hist_rt.get("change_pct")
+            if result["volume"] is None:
+                result["volume"] = hist_rt.get("volume")
+            print(f"   ✅ [备用] 沪深300 最新价={result['price']}, 涨跌幅={result['change_pct']}%")
+
+    # —— 步骤3：获取近30日历史数据（计算成交量均线和恐慌信号）——
+    try:
+        today = datetime.date.today()
+        start_date = (today - datetime.timedelta(days=35)).strftime("%Y%m%d")
+        end_date = today.strftime("%Y%m%d")
+        df_hist = ak.stock_zh_index_daily_em(symbol="000300", start_date=start_date, end_date=end_date)
+        if not df_hist.empty:
+            # 兼容不同版本的列名
+            date_col = df_hist.columns[0]
+            vol_col = df_hist.columns[-2]
+            chg_col = df_hist.columns[2] if len(df_hist.columns) > 2 else df_hist.columns[-1]
+            for c in df_hist.columns:
+                cl = c.strip().lower()
+                if '日期' in cl or 'date' in cl:
+                    date_col = c
+                if '成交' in cl or 'vol' in cl:
+                    vol_col = c
+                if '涨跌' in cl or 'change' in cl:
+                    chg_col = c
+
+            df_hist[date_col] = pd.to_datetime(df_hist[date_col]).dt.strftime("%Y%m%d")
+            df_hist = df_hist.sort_values(date_col).reset_index(drop=True)
+            df_hist['_vol_yi'] = df_hist[vol_col].astype(float) / 100000000
+
+            latest_row = df_hist.iloc[-1]
+            latest_volume_yi = float(latest_row['_vol_yi'])
+            latest_change = safe_float(latest_row.get(chg_col))
+
+            hist_20 = df_hist.iloc[-21:-1]
+            if len(hist_20) >= 5:
+                avg_20 = hist_20['_vol_yi'].astype(float).mean()
+                result["volume_20d_avg"] = round(avg_20, 2)
+                shrink1 = latest_volume_yi < avg_20 * 0.5
+                shrink2 = latest_volume_yi < 2000
+                result["volume_shrink"] = shrink1 and shrink2
+                if shrink1:
+                    result["volume_shrink_reason"] = f"成交额 {latest_volume_yi:.0f}亿 < 近20日均值({avg_20:.0f}亿)的50%"
+                if shrink2:
+                    if result["volume_shrink_reason"]:
+                        result["volume_shrink_reason"] += "，且"
+                    result["volume_shrink_reason"] += f"成交额 {latest_volume_yi:.0f}亿 < 2000亿"
+                if not result["volume_shrink"]:
+                    result["volume_shrink_reason"] = f"成交额 {latest_volume_yi:.0f}亿，近20日均值 {avg_20:.0f}亿，未明显萎缩"
+                print(f"   ✅ 沪深300 成交量萎缩={result['volume_shrink']}")
+
+            # 恐慌信号：单日跌幅 > 2.5%
+            if result["change_pct"] is not None:
+                change = result["change_pct"]
+                result["panic_signal"] = change < -2.5
+                if result["panic_signal"]:
+                    reason = f"沪深300单日跌幅 {change:.2f}%（超过2.5%警戒线）"
+                    if result["volume_shrink"]:
+                        reason += "，且成交量萎缩"
+                    result["panic_reason"] = reason
+                else:
+                    result["panic_reason"] = f"沪深300涨跌幅 {change:.2f}%，未达恐慌线（-2.5%）"
+    except Exception as e:
+        print(f"   ⚠️  获取沪深300历史数据失败（不影响主功能）: {e}")
+
+    return result
 
 
 def calculate_buy_signals(stock_data, hs300_data):
-    """
-    计算4大买入窗口信号
-    返回：信号dict，包含 signal（green/yellow/red）、reason（大白话说明）
-    """
+    """计算4大买入窗口信号"""
     signals = {}
     today = datetime.date.today()
     month = today.month
-    day = today.day
 
     for code, data in stock_data.items():
         category = data.get("category", "")
         pe = data.get("pe")
         pb = data.get("pb")
-        dividend_yield = data.get("dividend_yield_real")  # 实时股息率（%）
-        pev = data.get("pev")  # 保险PEV，若无则为None
-
-        signal = "yellow"  # 默认观望
+        dividend_yield = data.get("dividend_yield_real")
+        pev = data.get("pev")
+        signal = "yellow"
         reasons = []
-        score = 0  # 信号得分，越高越值得买
+        score = 0
 
-        # ---------- 窗口1：大盘恐慌大跌（最高优先级）----------
+        # 窗口1：大盘恐慌大跌
         if hs300_data.get("panic_signal"):
-            # 适配：银行/能源通信/保险都适合抄底
             if category in ["银行", "能源", "通信", "保险"]:
                 score += 50
                 reasons.append("🔥 大盘恐慌大跌！黄金买点，适合分批抄底")
 
-        # ---------- 窗口2：每年10-12月年底建仓期 ----------
+        # 窗口2：年底建仓期
         if month in [10, 11, 12]:
             score += 20
             reasons.append("📅 年底建仓期（10-12月），高股息股布局好时机")
 
-        # ---------- 窗口3：分红除权前1-2个月 ----------
-        # 规律：银行/能源通信 6-7月分红 → 4-5月买入；宁德时代 5-6月分红 → 3-4月买入
+        # 窗口3：分红除权前
         if category in ["银行", "能源", "通信"]:
             if month in [4, 5]:
                 score += 15
@@ -234,9 +332,8 @@ def calculate_buy_signals(stock_data, hs300_data):
                 score += 15
                 reasons.append("🎁 宁德时代临近分红季（5-6月），可提前布局")
 
-        # ---------- 窗口4：估值/股息率安全区间 ----------
+        # 窗口4：估值安全区间
         if category == "银行":
-            # 银行：PE＜5倍 且 PB＜0.65倍 → 安全买入
             pe_ok = (pe is not None and pe > 0 and pe < 5)
             pb_ok = (pb is not None and pb > 0 and pb < 0.65)
             if pe_ok and pb_ok:
@@ -248,27 +345,21 @@ def calculate_buy_signals(stock_data, hs300_data):
             elif pb_ok:
                 score += 10
                 reasons.append(f"📊 PB={pb:.2f}＜0.65，破净较深，可关注")
-
         elif category in ["能源", "通信"]:
-            # 能源通信：实时股息率＞6% → 黄金坑
             if dividend_yield is not None and dividend_yield > 6.0:
                 score += 30
                 reasons.append(f"💰 股息率 {dividend_yield:.2f}%＞6%，黄金坑！")
             elif dividend_yield is not None and dividend_yield > 4.0:
                 score += 10
                 reasons.append(f"💰 股息率 {dividend_yield:.2f}%，收益不错")
-
         elif category == "保险":
-            # 保险：PEV＜0.7倍 → 安全买入（若无法获取PEV，用PE替代参考）
             if pev is not None and pev > 0 and pev < 0.7:
                 score += 30
                 reasons.append(f"💎 保险PEV={pev:.2f}＜0.7，安全买入线")
             elif pe is not None and pe > 0 and pe < 10:
                 score += 10
                 reasons.append(f"📊 保险PE={pe:.2f}，估值偏低，可关注")
-
         elif category == "成长股":
-            # 宁德时代：PE＜15倍 → 波段买入
             if pe is not None and pe > 0 and pe < 15:
                 score += 30
                 reasons.append(f"🚀 宁德时代PE={pe:.2f}＜15，波段买入机会")
@@ -276,7 +367,6 @@ def calculate_buy_signals(stock_data, hs300_data):
                 score += 10
                 reasons.append(f"📊 宁德时代PE={pe:.2f}，估值合理，可关注")
 
-        # ---------- 综合判断信号 ----------
         if score >= 50:
             signal = "green"
         elif score >= 20:
@@ -297,7 +387,6 @@ def calculate_buy_signals(stock_data, hs300_data):
 
 
 def get_advice_text(signal, category, code):
-    """根据信号生成大白话操作建议"""
     if signal == "green":
         if category == "成长股":
             return "🚀 波段买入"
@@ -314,12 +403,13 @@ def get_advice_text(signal, category, code):
 def build_stock_data(df_spot):
     """
     从 akshare 实时行情 DataFrame 中提取15只目标股票的数据
-    返回：dict，key=代码，value=股票数据dict
+    若 df_spot 为 None，则逐只使用备用方案获取
     """
     result = {}
-    if df_spot is None:
-        print("   ⚠️  实时行情数据为空，无法提取股票数据")
-        return result
+    use_backup = (df_spot is None or df_spot.empty)
+
+    if use_backup:
+        print("   📡 使用备用方案：逐只获取股票数据（历史数据补全）...")
 
     for stock in STOCK_LIST:
         code = stock["code"]
@@ -327,84 +417,74 @@ def build_stock_data(df_spot):
         category = stock["category"]
         target_yield = stock["dividend_yield_target"]
 
-        # 在实时行情中查找该股票
-        row_df = df_spot[df_spot["代码"] == code]
+        if not use_backup:
+            # 主方案：从实时行情 DataFrame 提取
+            row_df = df_spot[df_spot["代码"] == code]
+            if not row_df.empty:
+                row = row_df.iloc[0]
+                price = safe_float(row.get("最新价"))
+                change_pct = safe_float(row.get("涨跌幅"))
+                pe = safe_float(row.get("市盈率-动态"))
+                pb = safe_float(row.get("市净率"))
+                dividend_yield_real = safe_float(row.get("股息率"))
+                market_cap = safe_float(row.get("总市值"))
+                pev = pe if category == "保险" and pe is not None else None
+                result[code] = {
+                    "code": code, "name": name, "category": category,
+                    "price": price, "change_pct": change_pct,
+                    "pe": pe, "pb": pb, "pev": pev,
+                    "dividend_yield_real": dividend_yield_real,
+                    "dividend_yield_target": target_yield,
+                    "market_cap": market_cap, "error": None,
+                }
+                print(f"   ✅ {code} {name}: 股价={price}, PE={pe}, PB={pb}, 股息率={dividend_yield_real}%")
+                continue
+            else:
+                print(f"   ⚠️  {code} {name} 在主方案中未找到，切换到备用方案")
 
-        if row_df.empty:
-            print(f"   ⚠️  未找到股票：{code} {name}")
-            # 填入空数据（避免前端报错）
+        # 备用方案：逐只获取
+        backup_data = get_stock_by_hist(code, name)
+        if backup_data:
+            pev = backup_data.get("pe") if category == "保险" else None
             result[code] = {
-                "code": code,
-                "name": name,
-                "category": category,
-                "price": None,
-                "change_pct": None,
-                "pe": None,
-                "pb": None,
-                "pev": None,
-                "dividend_yield_real": None,
+                "code": code, "name": name, "category": category,
+                "price": backup_data.get("price"),
+                "change_pct": backup_data.get("change_pct"),
+                "pe": backup_data.get("pe"),
+                "pb": backup_data.get("pb"),
+                "pev": pev,
+                "dividend_yield_real": backup_data.get("dividend_yield"),
                 "dividend_yield_target": target_yield,
-                "market_cap": None,
-                "error": "未获取到数据",
+                "market_cap": backup_data.get("market_cap"),
+                "error": None,
             }
-            continue
-
-        row = row_df.iloc[0]
-
-        # 提取字段（akshare stock_zh_a_spot_em 返回的列名）
-        price = safe_float(row.get("最新价"))
-        change_pct = safe_float(row.get("涨跌幅"))
-        pe = safe_float(row.get("市盈率-动态"))
-        pb = safe_float(row.get("市净率"))
-        dividend_yield_real = safe_float(row.get("股息率"))
-        market_cap = safe_float(row.get("总市值"))
-
-        # 保险股PEV（价格内含价值比）需要从其他接口获取，此处先用PE替代参考
-        pev = None
-        if category == "保险":
-            # 尝试用PE粗略替代PEV判断（PE较低时通常PEV也较低）
-            pev = pe
-
-        result[code] = {
-            "code": code,
-            "name": name,
-            "category": category,
-            "price": price,
-            "change_pct": change_pct,
-            "pe": pe,
-            "pb": pb,
-            "pev": pev,
-            "dividend_yield_real": dividend_yield_real,
-            "dividend_yield_target": target_yield,
-            "market_cap": market_cap,
-            "error": None,
-        }
-        print(f"   ✅ {code} {name}: 股价={price}, 涨跌幅={change_pct}%, PE={pe}, PB={pb}, 股息率={dividend_yield_real}%")
+            print(f"   ✅ [备用] {code} {name}: 股价={backup_data.get('price')}, 涨跌幅={backup_data.get('change_pct')}%")
+        else:
+            print(f"   ❌ {code} {name} 备用方案也失败，填入空数据")
+            result[code] = {
+                "code": code, "name": name, "category": category,
+                "price": None, "change_pct": None, "pe": None, "pb": None,
+                "pev": None, "dividend_yield_real": None,
+                "dividend_yield_target": target_yield,
+                "market_cap": None, "error": "数据获取失败",
+            }
 
     return result
 
 
 def generate_output_json(stock_data, hs300_data):
-    """
-    生成最终输出的 data.json
-    """
     today_str = datetime.date.today().strftime("%Y-%m-%d")
     now_str = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-    # 按板块分组股票数据
     categorized = {}
     for group_name, codes in CATEGORY_GROUPS.items():
         categorized[group_name] = []
         for code in codes:
             if code in stock_data:
-                item = dict(stock_data[code])
-                # 加入买入信号（稍后填充）
-                categorized[group_name].append(item)
+                categorized[group_name].append(dict(stock_data[code]))
 
-    # 计算买入信号
     signals = calculate_buy_signals(stock_data, hs300_data)
 
-    # 将信号注入各板块数据
     for group_name, stocks in categorized.items():
         for i, stock in enumerate(stocks):
             code = stock["code"]
@@ -419,15 +499,14 @@ def generate_output_json(stock_data, hs300_data):
                 stock["reasons"] = ["数据不足，建议观望"]
                 stock["advice"] = "🔴 数据不足"
 
-    # 构建输出
     output = {
         "update_time": now_str,
         "data_date": today_str,
         "hs300": {
-            "price": hs300_data.get("hs300_price"),
-            "change_pct": hs300_data.get("hs300_change_pct"),
-            "volume": hs300_data.get("hs300_volume"),
-            "volume_20d_avg": hs300_data.get("hs300_volume_20d_avg"),
+            "price": hs300_data.get("price"),
+            "change_pct": hs300_data.get("change_pct"),
+            "volume": hs300_data.get("volume"),
+            "volume_20d_avg": hs300_data.get("volume_20d_avg"),
             "volume_shrink": hs300_data.get("volume_shrink", False),
             "volume_shrink_reason": hs300_data.get("volume_shrink_reason", ""),
             "panic_signal": hs300_data.get("panic_signal", False),
@@ -447,24 +526,21 @@ def generate_output_json(stock_data, hs300_data):
 def main():
     print("=" * 60)
     print("  A股15只赚钱天团股票监测 - 数据抓取")
-    print("   数据源：akshare（东方财富）")
+    print("   数据源：akshare（东方财富 + 历史数据备用）")
     print("=" * 60)
 
     # 1. 获取沪深300大盘数据
     hs300_data = get_hs300_data()
 
-    # 2. 获取全部A股实时行情
-    df_spot = get_realtime_data()
-
-    # 3. 提取15只目标股票的数据
+    # 2. 获取全部A股实时行情（失败会自动切换备用方案）
     print("\n📊 提取15只目标股票数据...")
+    df_spot = get_realtime_data()
     stock_data = build_stock_data(df_spot)
 
-    # 4. 生成 data.json
+    # 3. 生成 data.json
     print("\n📝 生成 data.json...")
     output = generate_output_json(stock_data, hs300_data)
 
-    # 写入文件
     output_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data.json")
     with open(output_path, "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
