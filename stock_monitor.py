@@ -15,6 +15,9 @@ import datetime
 import time
 import os
 import logging
+import requests
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 
 # ============================================================
 # 日志配置
@@ -26,10 +29,39 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# 绕过代理
+# ============================================================
+# 关键：彻底禁用代理（解决沙箱/公司网络问题）
+# akshare 内部使用 requests，必须同时清环境变量 + 设 session proxies={}
+# ============================================================
+# 1. 清除所有代理相关环境变量（大小写都清）
+_proxy_keys = [k for k in os.environ.keys() if 'proxy' in k.lower()]
+for k in _proxy_keys:
+    del os.environ[k]
+    logger.info(f"   🧹 已清除环境变量: {k}")
+
+# 2. 设置 NO_PROXY（防止被系统代理拦截）
 os.environ['NO_PROXY'] = '*'
-for k in ['HTTP_PROXY', 'HTTPS_PROXY', 'http_proxy', 'https_proxy']:
-    os.environ.pop(k, None)
+os.environ['no_proxy'] = '*'
+
+# 3. 配置 akshare 全局 Session（强制不走代理）
+def init_akshare_session():
+    session = requests.Session()
+    # 关键：强制不走任何代理
+    session.proxies = {'http': None, 'https': None}
+    retry = Retry(
+        total=3,
+        backoff_factor=1,
+        status_forcelist=[429, 500, 502, 503, 504],
+        allowed_methods=["GET", "POST"]
+    )
+    adapter = HTTPAdapter(max_retries=retry)
+    session.mount('http://', adapter)
+    session.mount('https://', adapter)
+    session.timeout = 10
+    ak._session = session
+    logger.info("✅ akshare Session 已配置（超时10s，重试3次，禁用代理）")
+
+init_akshare_session()
 
 
 # ============================================================
@@ -81,7 +113,7 @@ def get_hs300_data():
         "panic_reason": "",
     }
 
-    # 步骤1：获取沪深300近期历史数据（含今日）
+    # 获取沪深300近期历史数据（含今日）
     today = datetime.date.today()
     start_date = (today - datetime.timedelta(days=35)).strftime("%Y%m%d")
     end_date = today.strftime("%Y%m%d")
@@ -123,7 +155,7 @@ def get_hs300_data():
 
     logger.info(f"   ✅ 沪深300 最新价={result['price']}, 涨跌幅={result['change_pct']}%")
 
-    # 步骤2：计算成交量萎缩
+    # 计算成交量萎缩
     hist_20 = df_hist.iloc[-21:-1]
     if len(hist_20) >= 5:
         avg_20 = hist_20['_vol_yi'].astype(float).mean()
@@ -140,9 +172,9 @@ def get_hs300_data():
             result["volume_shrink_reason"] = "，且".join(reasons)
         else:
             result["volume_shrink_reason"] = f"成交额 {latest_volume_yi:.0f}亿，近20日均值 {avg_20:.0f}亿，未明显萎缩"
-        logger.info(f"   ✅ 成交量萎缩={result['volume_shrink']}")
+        logger.info(f"   ✅ 沪深300 成交量萎缩={result['volume_shrink']}")
 
-    # 步骤3：恐慌信号（单日跌幅 > 2.5%）
+    # 恐慌信号（单日跌幅 > 2.5%）
     if result["change_pct"] is not None:
         result["panic_signal"] = result["change_pct"] < -2.5
         if result["panic_signal"]:
