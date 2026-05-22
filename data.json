@@ -1,15 +1,15 @@
 {
-  "update_time": "2026-05-22 13:50:34",
+  "update_time": "2026-05-22 06:41:26",
   "data_date": "2026-05-22",
   "hs300": {
-    "price": 4834.9507,
-    "change_pct": 1.08,
-    "volume": 31.24,
-    "volume_20d_avg": 1.56,
+    "price": 4842.7905,
+    "change_pct": 1.25,
+    "volume": 38.98,
+    "volume_20d_avg": 1.95,
     "volume_shrink": false,
-    "volume_shrink_reason": "成交额 31亿，近20日均值 2亿，未明显萎缩",
+    "volume_shrink_reason": "成交额 39亿，近20日均值 2亿，未明显萎缩",
     "panic_signal": false,
-    "panic_reason": "沪深300涨跌幅 1.08%，未达恐慌线（-2.5%）"
+    "panic_reason": "沪深300涨跌幅 1.25%，未达恐慌线（-2.5%）"
   },
   "categories": {
     "银行": [
@@ -17,77 +17,84 @@
         "code": "601328",
         "name": "交通银行",
         "category": "银行",
-        "price": 6.71,
-        "change_pct": 1.05,
-        "pe": 6.4519234,
-        "pb": 0.5026217,
-        "pev": 0.5026217,
-        "dividend_yield_real": 5.32,
+        "price": 6.67,
+        "change_pct": 0.45,
+        "pe": 6.4134617,
+        "pb": 0.49962547,
+        "pev": 0.49962547,
+        "dividend_yield": 8.46,
         "dividend_yield_target": 5.62,
-        "market_cap": 5929.21,
-        "signal": "yellow",
-        "score": 30,
+        "market_cap": 5893.86,
+        "signal": "green",
+        "score": 70,
         "reasons": [
-          "✅ PB=0.50 < 0.65（破净）"
+          "✅ PB=0.50 < 0.65（破净）",
+          "✅ 股息率=8.46% > 5%（高股息）",
+          "🎁 股息率=8.46%，接近目标(5.62%)"
         ],
-        "advice": "🟡 观望"
+        "advice": "🟢 可买入"
       },
       {
         "code": "601166",
         "name": "兴业银行",
         "category": "银行",
-        "price": 17.52,
-        "change_pct": 0.86,
-        "pe": 5.475,
-        "pb": 0.44534826,
-        "pev": 0.44534826,
-        "dividend_yield_real": 9.36,
+        "price": 17.5,
+        "change_pct": 0.75,
+        "pe": 5.46875,
+        "pb": 0.44483986,
+        "pev": 0.44483986,
+        "dividend_yield": 6.09,
         "dividend_yield_target": 5.21,
-        "market_cap": 3707.73,
-        "signal": "yellow",
-        "score": 30,
+        "market_cap": 3703.5,
+        "signal": "green",
+        "score": 70,
         "reasons": [
-          "✅ PB=0.45 < 0.65（破净）"
+          "✅ PB=0.44 < 0.65（破净）",
+          "✅ 股息率=6.09% > 5%（高股息）",
+          "🎁 股息率=6.09%，接近目标(5.21%)"
         ],
-        "advice": "🟡 观望"
+        "advice": "🟢 可买入"
       },
       {
         "code": "601998",
         "name": "中信银行",
         "category": "银行",
-        "price": 7.81,
-        "change_pct": -0.89,
-        "pe": 6.508333,
-        "pb": 0.512669,
-        "pev": 0.512669,
-        "dividend_yield_real": 4.57,
+        "price": 7.78,
+        "change_pct": -1.27,
+        "pe": 6.483333,
+        "pb": 0.51069975,
+        "pev": 0.51069975,
+        "dividend_yield": 6.25,
         "dividend_yield_target": 5.17,
-        "market_cap": 4345.89,
-        "signal": "yellow",
-        "score": 30,
+        "market_cap": 4329.19,
+        "signal": "green",
+        "score": 70,
         "reasons": [
-          "✅ PB=0.51 < 0.65（破净）"
+          "✅ PB=0.51 < 0.65（破净）",
+          "✅ 股息率=6.25% > 5%（高股息）",
+          "🎁 股息率=6.25%，接近目标(5.17%)"
         ],
-        "advice": "🟡 观望"
+        "advice": "🟢 可买入"
       },
       {
         "code": "601288",
         "name": "农业银行",
         "category": "银行",
-        "price": 6.49,
-        "change_pct": -0.31,
-        "pe": 8.215189,
-        "pb": 0.8036156,
-        "pev": 0.8036156,
-        "dividend_yield_real": 3.83,
+        "price": 6.46,
+        "change_pct": -0.77,
+        "pe": 8.177215,
+        "pb": 0.79990095,
+        "pev": 0.79990095,
+        "dividend_yield": 10.15,
         "dividend_yield_target": 4.61,
-        "market_cap": 22713.9,
-        "signal": "red",
-        "score": 0,
+        "market_cap": 22608.91,
+        "signal": "yellow",
+        "score": 40,
         "reasons": [
-          "😴 当前无明显买入信号，建议观望"
+          "✅ 股息率=10.15% > 5%（高股息）",
+          "🎁 股息率=10.15%，接近目标(4.61%)"
         ],
-        "advice": "🔴 不建议（等待更好买点）"
+        "advice": "🟡 观望"
       },
       {
         "code": "601398",
@@ -98,34 +105,37 @@
         "pe": 7.118812,
         "pb": 0.64997286,
         "pev": 0.64997286,
-        "dividend_yield_real": 4.34,
+        "dividend_yield": 8.07,
         "dividend_yield_target": 4.22,
         "market_cap": 25625.61,
-        "signal": "yellow",
-        "score": 30,
+        "signal": "green",
+        "score": 70,
         "reasons": [
-          "✅ PB=0.65 < 0.65（破净）"
+          "✅ PB=0.65 < 0.65（破净）",
+          "✅ 股息率=8.07% > 5%（高股息）",
+          "🎁 股息率=8.07%，接近目标(4.22%)"
         ],
-        "advice": "🟡 观望"
+        "advice": "🟢 可买入"
       },
       {
         "code": "601939",
         "name": "建设银行",
         "category": "银行",
-        "price": 10.12,
-        "change_pct": 0.7,
-        "pe": 7.7846155,
-        "pb": 0.7463127,
-        "pev": 0.7463127,
-        "dividend_yield_real": 3.9,
+        "price": 10.11,
+        "change_pct": 0.6,
+        "pe": 7.776923,
+        "pb": 0.7455752,
+        "pev": 0.7455752,
+        "dividend_yield": 7.26,
         "dividend_yield_target": 4.05,
-        "market_cap": 26473.96,
-        "signal": "red",
-        "score": 0,
+        "market_cap": 26447.8,
+        "signal": "yellow",
+        "score": 40,
         "reasons": [
-          "😴 当前无明显买入信号，建议观望"
+          "✅ 股息率=7.26% > 5%（高股息）",
+          "🎁 股息率=7.26%，接近目标(4.05%)"
         ],
-        "advice": "🔴 不建议（等待更好买点）"
+        "advice": "🟡 观望"
       },
       {
         "code": "601988",
@@ -133,18 +143,19 @@
         "category": "银行",
         "price": 5.86,
         "change_pct": 1.03,
-        "pe": 7.932432,
-        "pb": 0.6919722,
-        "pev": 0.6919722,
-        "dividend_yield_real": 3.98,
+        "pe": 7.918919,
+        "pb": 0.6907934,
+        "pev": 0.6907934,
+        "dividend_yield": 9.15,
         "dividend_yield_target": 3.97,
-        "market_cap": 18913.87,
-        "signal": "red",
-        "score": 0,
+        "market_cap": 18881.65,
+        "signal": "yellow",
+        "score": 40,
         "reasons": [
-          "😴 当前无明显买入信号，建议观望"
+          "✅ 股息率=9.15% > 5%（高股息）",
+          "🎁 股息率=9.15%，接近目标(3.97%)"
         ],
-        "advice": "🔴 不建议（等待更好买点）"
+        "advice": "🟡 观望"
       },
       {
         "code": "601658",
@@ -155,28 +166,30 @@
         "pe": 6.7808213,
         "pb": 0.57578224,
         "pev": 0.57578224,
-        "dividend_yield_real": 4.82,
+        "dividend_yield": 9.25,
         "dividend_yield_target": 3.43,
         "market_cap": 5944.71,
-        "signal": "yellow",
-        "score": 30,
+        "signal": "green",
+        "score": 70,
         "reasons": [
-          "✅ PB=0.58 < 0.65（破净）"
+          "✅ PB=0.58 < 0.65（破净）",
+          "✅ 股息率=9.25% > 5%（高股息）",
+          "🎁 股息率=9.25%，接近目标(3.43%)"
         ],
-        "advice": "🟡 观望"
+        "advice": "🟢 可买入"
       },
       {
         "code": "600036",
         "name": "招商银行",
         "category": "银行",
-        "price": 37.19,
-        "change_pct": 0.11,
-        "pe": 6.5131345,
-        "pb": 0.82828504,
-        "pev": 0.82828504,
-        "dividend_yield_real": 8.11,
+        "price": 37.11,
+        "change_pct": -0.11,
+        "pe": 6.4991245,
+        "pb": 0.82650334,
+        "pev": 0.82650334,
+        "dividend_yield": 2.06,
         "dividend_yield_target": 2.85,
-        "market_cap": 9379.26,
+        "market_cap": 9359.08,
         "signal": "red",
         "score": 0,
         "reasons": [
@@ -191,20 +204,20 @@
         "code": "601318",
         "name": "中国平安",
         "category": "保险",
-        "price": 53.85,
-        "change_pct": 0.17,
-        "pe": 7.427586,
-        "pb": 0.9575716,
-        "pev": 0.9575716,
-        "dividend_yield_real": 5.02,
+        "price": 53.79,
+        "change_pct": 0.06,
+        "pe": 7.4193106,
+        "pb": 0.95650476,
+        "pev": 0.95650476,
+        "dividend_yield": 5.95,
         "dividend_yield_target": 3.86,
-        "market_cap": 9750.97,
-        "signal": "red",
-        "score": 0,
+        "market_cap": 9740.1,
+        "signal": "yellow",
+        "score": 30,
         "reasons": [
-          "😴 当前无明显买入信号，建议观望"
+          "✅ 股息率=5.95% > 3%"
         ],
-        "advice": "🔴 不建议（等待更好买点）"
+        "advice": "🟡 观望"
       },
       {
         "code": "601628",
@@ -215,15 +228,15 @@
         "pe": 6.6191406,
         "pb": 1.6011528,
         "pev": 1.6011528,
-        "dividend_yield_real": 2.51,
+        "dividend_yield": 3.54,
         "dividend_yield_target": 3.02,
         "market_cap": 9578.91,
-        "signal": "red",
-        "score": 0,
+        "signal": "yellow",
+        "score": 30,
         "reasons": [
-          "😴 当前无明显买入信号，建议观望"
+          "✅ 股息率=3.54% > 3%"
         ],
-        "advice": "🔴 不建议（等待更好买点）"
+        "advice": "🟡 观望"
       }
     ],
     "成长股": [
@@ -231,14 +244,14 @@
         "code": "300750",
         "name": "宁德时代",
         "category": "成长股",
-        "price": 412.36,
-        "change_pct": 0.18,
-        "pe": 23.50969,
-        "pb": 5.2261634,
-        "pev": 5.2261634,
-        "dividend_yield_real": 1.35,
+        "price": 411.92,
+        "change_pct": 0.07,
+        "pe": 23.489166,
+        "pb": 5.221601,
+        "pev": 5.221601,
+        "dividend_yield": 0.19,
         "dividend_yield_target": 0.41,
-        "market_cap": 19077.87,
+        "market_cap": 19061.22,
         "signal": "red",
         "score": 0,
         "reasons": [
@@ -250,8 +263,8 @@
   },
   "summary": {
     "total_stocks": 15,
-    "green_count": 0,
-    "yellow_count": 5,
-    "red_count": 10
+    "green_count": 5,
+    "yellow_count": 8,
+    "red_count": 2
   }
 }
