@@ -436,7 +436,7 @@ function getCategoryStrategy(title, stocks) {
   if (title === '能源通信') {
     let bestYield = -1;
     for (const s of stocks) {
-      if (s.dividend_yield_real !== null && s.dividend_yield_real > bestYield) bestYield = s.dividend_yield_real;
+      if (s.dividend_yield !== null && s.dividend_yield > bestYield) bestYield = s.dividend_yield;
     }
     if (bestYield > 6.0) {
       items.push({
@@ -507,7 +507,7 @@ function renderCategory(title, stocks) {
     const price = (s.price !== null && s.price !== undefined) ? s.price.toFixed(2) : '--';
     const pe = s.pe !== null ? s.pe.toFixed(2) : '--';
     const pb = s.pb !== null ? s.pb.toFixed(2) : '--';
-    const yieldVal = s.dividend_yield_real !== null ? s.dividend_yield_real.toFixed(2) : '--';
+    const yieldVal = s.dividend_yield !== null ? s.dividend_yield.toFixed(2) : '--';
     const chg = s.change_pct !== null && s.change_pct !== undefined ? s.change_pct.toFixed(2) + '%' : '--';
     const chgCls = s.change_pct > 0 ? 'chg-up' : s.change_pct < 0 ? 'chg-down' : 'chg-flat';
     const pbCls = pbClass(s.pb);
