@@ -1,5 +1,5 @@
 {
-  "update_time": "2026-05-22 11:26:04",
+  "update_time": "2026-05-22 22:42:50",
   "data_date": "2026-05-22",
   "hs300": {
     "price": 4845.0957,
@@ -201,7 +201,68 @@
         "advice": "🟡 观望"
       }
     ],
-    "能源通信": [],
+    "能源通信": [
+      {
+        "code": "600941",
+        "name": "中国移动",
+        "category": "能源通信",
+        "price": 95.98,
+        "change_pct": -0.8,
+        "forward_dividend": 4.7037,
+        "pe": 15.2349205,
+        "pb": 1.4554553,
+        "pev": 1.4554553,
+        "dividend_yield": 4.9,
+        "dividend_yield_target": 7.85,
+        "market_cap": 20774.5,
+        "signal": "red",
+        "score": 0,
+        "reasons": [
+          "😴 当前无明显买入信号，建议观望"
+        ],
+        "advice": "🔴 不建议（等待更好买点）"
+      },
+      {
+        "code": "600938",
+        "name": "中国海油",
+        "category": "能源通信",
+        "price": 35.83,
+        "change_pct": -1.08,
+        "forward_dividend": 1.1521,
+        "pe": 13.941635,
+        "pb": 2.0344086,
+        "pev": 2.0344086,
+        "dividend_yield": 3.22,
+        "dividend_yield_target": 6.28,
+        "market_cap": 17029.98,
+        "signal": "red",
+        "score": 0,
+        "reasons": [
+          "😴 当前无明显买入信号，建议观望"
+        ],
+        "advice": "🔴 不建议（等待更好买点）"
+      },
+      {
+        "code": "601857",
+        "name": "中国石油",
+        "category": "能源通信",
+        "price": 11.08,
+        "change_pct": -1.86,
+        "forward_dividend": 0.47,
+        "pe": 12.88372,
+        "pb": 1.2484506,
+        "pev": 1.2484506,
+        "dividend_yield": 4.24,
+        "dividend_yield_target": 4.83,
+        "market_cap": 20278.72,
+        "signal": "red",
+        "score": 0,
+        "reasons": [
+          "😴 当前无明显买入信号，建议观望"
+        ],
+        "advice": "🔴 不建议（等待更好买点）"
+      }
+    ],
     "保险": [
       {
         "code": "601318",

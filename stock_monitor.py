@@ -389,7 +389,7 @@ def build_stock_data(hs300_data):
         # 分类归档
         if category == "银行":
             categories["银行"].append(stock_data)
-        elif category in ["能源", "通信"]:
+        elif category == "能源通信":
             categories["能源通信"].append(stock_data)
         elif category == "保险":
             categories["保险"].append(stock_data)
