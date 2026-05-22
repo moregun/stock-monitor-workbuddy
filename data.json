@@ -1,45 +1,26 @@
 {
-  "update_time": "2026-05-21 23:00:00",
-  "data_date": "2026-05-21",
+  "update_time": "2026-05-22 00:22:35",
+  "data_date": "2026-05-22",
   "hs300": {
-    "price": 3872.34,
-    "change_pct": -0.85,
-    "volume": 2850.0,
-    "volume_20d_avg": 3200.0,
+    "price": null,
+    "change_pct": null,
+    "volume": null,
+    "volume_20d_avg": null,
     "volume_shrink": false,
-    "volume_shrink_reason": "成交额 2850亿，近20日均值 3200亿，未明显萎缩",
+    "volume_shrink_reason": "",
     "panic_signal": false,
-    "panic_reason": "沪深300涨跌幅 -0.85%，未达恐慌线（-2.5%）"
+    "panic_reason": ""
   },
   "categories": {
-    "银行": [
-      {"code": "601328", "name": "交通银行", "category": "银行", "price": 7.82, "change_pct": -0.51, "pe": 4.8, "pb": 0.58, "pev": null, "dividend_yield_real": 5.62, "dividend_yield_target": 5.62, "market_cap": 5800.0, "signal": "green", "score": 50, "reasons": ["💎 银行估值安全区：PE=4.80＜5 且 PB=0.58＜0.65，无脑买入线", "📅 年底建仓期（10-12月），高股息股布局好时机"], "advice": "✅ 分批买入", "error": null},
-      {"code": "601166", "name": "兴业银行", "category": "银行", "price": 18.45, "change_pct": -0.73, "pe": 4.9, "pb": 0.61, "pev": null, "dividend_yield_real": 5.21, "dividend_yield_target": 5.21, "market_cap": 4200.0, "signal": "green", "score": 50, "reasons": ["💎 银行估值安全区：PE=4.90＜5 且 PB=0.61＜0.65，无脑买入线", "📅 年底建仓期（10-12月），高股息股布局好时机"], "advice": "✅ 分批买入", "error": null},
-      {"code": "601998", "name": "中信银行", "category": "银行", "price": 7.15, "change_pct": -0.42, "pe": 4.7, "pb": 0.55, "pev": null, "dividend_yield_real": 5.17, "dividend_yield_target": 5.17, "market_cap": 3900.0, "signal": "green", "score": 50, "reasons": ["💎 银行估值安全区：PE=4.70＜5 且 PB=0.55＜0.65，无脑买入线"], "advice": "✅ 分批买入", "error": null},
-      {"code": "601288", "name": "农业银行", "category": "银行", "price": 4.52, "change_pct": -0.66, "pe": 4.5, "pb": 0.53, "pev": null, "dividend_yield_real": 4.61, "dividend_yield_target": 4.61, "market_cap": 6800.0, "signal": "green", "score": 40, "reasons": ["💎 银行估值安全区：PE=4.50＜5 且 PB=0.53＜0.65，无脑买入线"], "advice": "✅ 分批买入", "error": null},
-      {"code": "601398", "name": "工商银行", "category": "银行", "price": 6.21, "change_pct": -0.32, "pe": 4.6, "pb": 0.56, "pev": null, "dividend_yield_real": 4.22, "dividend_yield_target": 4.22, "market_cap": 9200.0, "signal": "green", "score": 40, "reasons": ["💎 银行估值安全区：PE=4.60＜5 且 PB=0.56＜0.65，无脑买入线"], "advice": "✅ 分批买入", "error": null},
-      {"code": "601939", "name": "建设银行", "category": "银行", "price": 7.58, "change_pct": -0.39, "pe": 4.7, "pb": 0.59, "pev": null, "dividend_yield_real": 4.05, "dividend_yield_target": 4.05, "market_cap": 7800.0, "signal": "green", "score": 40, "reasons": ["💎 银行估值安全区：PE=4.70＜5 且 PB=0.59＜0.65，无脑买入线"], "advice": "✅ 分批买入", "error": null},
-      {"code": "601988", "name": "中国银行", "category": "银行", "price": 4.85, "change_pct": -0.41, "pe": 4.4, "pb": 0.52, "pev": null, "dividend_yield_real": 3.97, "dividend_yield_target": 3.97, "market_cap": 7200.0, "signal": "green", "score": 40, "reasons": ["💎 银行估值安全区：PE=4.40＜5 且 PB=0.52＜0.65，无脑买入线"], "advice": "✅ 分批买入", "error": null},
-      {"code": "601658", "name": "邮储银行", "category": "银行", "price": 5.13, "change_pct": -0.58, "pe": 5.2, "pb": 0.62, "pev": null, "dividend_yield_real": 3.43, "dividend_yield_target": 3.43, "market_cap": 3100.0, "signal": "yellow", "score": 10, "reasons": ["📊 PB=0.62＜0.65，破净较深，可关注"], "advice": "⚠️ 观望（可小仓位关注）", "error": null},
-      {"code": "600036", "name": "招商银行", "category": "银行", "price": 38.26, "change_pct": -0.95, "pe": 6.1, "pb": 0.91, "pev": null, "dividend_yield_real": 2.85, "dividend_yield_target": 2.85, "market_cap": 9500.0, "signal": "red", "score": 0, "reasons": ["😴 当前无明显买入信号，建议观望"], "advice": "🔴 不建议（等待更好买点）", "error": null}
-    ],
-    "能源通信": [
-      {"code": "600941", "name": "中国移动", "category": "通信", "price": 68.50, "change_pct": -0.22, "pe": 10.5, "pb": 1.45, "pev": null, "dividend_yield_real": 7.85, "dividend_yield_target": 7.85, "market_cap": 21000.0, "signal": "green", "score": 60, "reasons": ["💰 股息率 7.85%＞6%，黄金坑！", "📅 年底建仓期（10-12月），高股息股布局好时机"], "advice": "💰 黄金坑！分批买入", "error": null},
-      {"code": "600938", "name": "中国海油", "category": "能源", "price": 32.18, "change_pct": -1.12, "pe": 8.2, "pb": 1.52, "pev": null, "dividend_yield_real": 6.28, "dividend_yield_target": 6.28, "market_cap": 8500.0, "signal": "green", "score": 50, "reasons": ["💰 股息率 6.28%＞6%，黄金坑！"], "advice": "💰 黄金坑！分批买入", "error": null},
-      {"code": "601857", "name": "中国石油", "category": "能源", "price": 9.87, "change_pct": -0.91, "pe": 8.8, "pb": 1.21, "pev": null, "dividend_yield_real": 4.83, "dividend_yield_target": 4.83, "market_cap": 12000.0, "signal": "yellow", "score": 10, "reasons": ["💰 股息率 4.83%，收益不错"], "advice": "⚠️ 观望（可小仓位关注）", "error": null}
-    ],
-    "保险": [
-      {"code": "601318", "name": "中国平安", "category": "保险", "price": 52.30, "change_pct": -1.25, "pe": 8.5, "pb": 1.05, "pev": 0.62, "dividend_yield_real": 3.86, "dividend_yield_target": 3.86, "market_cap": 9500.0, "signal": "green", "score": 40, "reasons": ["💎 保险PEV=0.62＜0.7，安全买入线", "📅 年底建仓期（10-12月），高股息股布局好时机"], "advice": "✅ 分批买入", "error": null},
-      {"code": "601628", "name": "中国人寿", "category": "保险", "price": 42.15, "change_pct": -0.88, "pe": 12.1, "pb": 1.35, "pev": 0.85, "dividend_yield_real": 3.02, "dividend_yield_target": 3.02, "market_cap": 7200.0, "signal": "red", "score": 0, "reasons": ["😴 当前无明显买入信号，建议观望"], "advice": "🔴 不建议（等待更好买点）", "error": null}
-    ],
-    "成长股": [
-      {"code": "300750", "name": "宁德时代", "category": "成长股", "price": 195.60, "change_pct": -2.15, "pe": 18.2, "pb": 2.85, "pev": null, "dividend_yield_real": 0.41, "dividend_yield_target": 0.41, "market_cap": 8500.0, "signal": "yellow", "score": 10, "reasons": ["📊 宁德时代PE=18.20，估值合理，可关注"], "advice": "⚠️ 观望（可小仓位关注）", "error": null}
-    ]
+    "银行": [],
+    "能源通信": [],
+    "保险": [],
+    "成长股": []
   },
   "summary": {
     "total_stocks": 15,
-    "green_count": 8,
-    "yellow_count": 4,
-    "red_count": 3
+    "green_count": 0,
+    "yellow_count": 0,
+    "red_count": 0
   }
 }
