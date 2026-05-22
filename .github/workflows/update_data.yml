@@ -21,6 +21,9 @@ jobs:
     runs-on: ubuntu-latest
     # 仅在默认分支运行，避免 PR 触发时重复运行
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    # 提前适配 Node.js 24（避免 2026-06-02 后失效）
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
       - name: 📥 检出仓库代码
         uses: actions/checkout@v4
