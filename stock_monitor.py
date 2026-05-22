@@ -1,23 +1,16 @@
-#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-A股15只赚钱天团股票监测面板
-数据源：akshare（逐只获取，不拉取全市场数据）
-功能：抓取15只股票 + 沪深300大盘数据，计算买入信号，输出 data.json
-用法：pip install akshare pandas && python stock_monitor.py
-更新频率：由 GitHub Actions 定时触发，每天 10:00 和 14:00（北京时间）各运行一次
+A股15只赚钱天团股票监测系统
+使用 yfinance 获取数据（境外服务器稳定）
 """
 
-import akshare as ak
-import pandas as pd
 import json
 import datetime
 import time
-import os
 import logging
-import requests
-from requests.adapters import HTTPAdapter
-from urllib3.util.retry import Retry
+import yfinance as yf
+import pandas as pd
+import numpy as np
 
 # ============================================================
 # 日志配置
@@ -30,78 +23,141 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # ============================================================
-# 关键：彻底禁用代理（解决沙箱/公司网络问题）
-# akshare 内部使用 requests，必须同时清环境变量 + 设 session proxies={}
+# 股票列表（yfinance 格式代码）
 # ============================================================
-# 1. 清除所有代理相关环境变量（大小写都清）
-_proxy_keys = [k for k in os.environ.keys() if 'proxy' in k.lower()]
-for k in _proxy_keys:
-    del os.environ[k]
-    logger.info(f"   🧹 已清除环境变量: {k}")
+STOCK_MAP = {
+    "601328": {"name": "交通银行", "category": "银行", "ticker": "601328.SS"},
+    "601166": {"name": "兴业银行", "category": "银行", "ticker": "601166.SS"},
+    "601998": {"name": "中信银行", "category": "银行", "ticker": "601998.SS"},
+    "601288": {"name": "农业银行", "category": "银行", "ticker": "601288.SS"},
+    "601398": {"name": "工商银行", "category": "银行", "ticker": "601398.SS"},
+    "601939": {"name": "建设银行", "category": "银行", "ticker": "601939.SS"},
+    "601988": {"name": "中国银行", "category": "银行", "ticker": "601988.SS"},
+    "601658": {"name": "邮储银行", "category": "银行", "ticker": "601658.SS"},
+    "600036": {"name": "招商银行", "category": "银行", "ticker": "600036.SS"},
+    "600941": {"name": "中国移动", "category": "能源通信", "ticker": "600941.SS"},
+    "600938": {"name": "中国海油", "category": "能源通信", "ticker": "600938.SS"},
+    "601857": {"name": "中国石油", "category": "能源通信", "ticker": "601857.SS"},
+    "601318": {"name": "中国平安", "category": "保险", "ticker": "601318.SS"},
+    "601628": {"name": "中国人寿", "category": "保险", "ticker": "601628.SS"},
+    "300750": {"name": "宁德时代", "category": "成长股", "ticker": "300750.SZ"},
+}
 
-# 2. 设置 NO_PROXY（防止被系统代理拦截）
-os.environ['NO_PROXY'] = '*'
-os.environ['no_proxy'] = '*'
-
-# 3. 配置 akshare 全局 Session（强制不走代理）
-def init_akshare_session():
-    session = requests.Session()
-    # 关键：强制不走任何代理
-    session.proxies = {'http': None, 'https': None}
-    retry = Retry(
-        total=3,
-        backoff_factor=1,
-        status_forcelist=[429, 500, 502, 503, 504],
-        allowed_methods=["GET", "POST"]
-    )
-    adapter = HTTPAdapter(max_retries=retry)
-    session.mount('http://', adapter)
-    session.mount('https://', adapter)
-    session.timeout = 10
-    ak._session = session
-    logger.info("✅ akshare Session 已配置（超时10s，重试3次，禁用代理）")
-
-init_akshare_session()
-
+# 目标股息率（用于信号判断）
+DIVIDEND_TARGET = {
+    "601328": 5.62, "601166": 5.21, "601998": 5.17, "601288": 4.61,
+    "601398": 4.22, "601939": 4.05, "601988": 3.97, "601658": 3.43,
+    "600036": 2.85, "600941": 7.85, "600938": 6.28, "601857": 4.83,
+    "601318": 3.86, "601628": 3.02, "300750": 0.41,
+}
 
 # ============================================================
-# 通用工具
+# 工具函数
 # ============================================================
 def safe_float(val, default=None):
-    if val is None:
-        return default
+    """安全转换为 float（处理 numpy/pandas 类型）"""
     try:
-        f = float(val)
-        return f if pd.notna(f) else default
-    except Exception:
+        if val is None:
+            return default
+        # 处理 numpy/pandas 类型
+        if isinstance(val, (np.integer, np.floating)):
+            val = float(val)
+        if isinstance(val, (np.bool_, bool)):
+            return default
+        return float(val)
+    except (ValueError, TypeError, OverflowError):
         return default
 
 
-def fetch_with_retry(func, *args, **kwargs):
-    """
-    带重试的数据获取（3次，间隔递增3s/6s/9s）
-    """
-    for i in range(3):
-        try:
-            return func(*args, **kwargs)
-        except Exception as e:
-            wait = (i + 1) * 3
-            logger.warning(f"   ⚠️  第{i+1}次失败: {e}，{wait}s后重试...")
-            if i == 2:
-                logger.error("   ❌ 所有重试失败")
-                return None
-            time.sleep(wait)
+def safe_bool(val, default=False):
+    """安全转换为 bool（处理 numpy/pandas 类型）"""
+    try:
+        if val is None:
+            return default
+        # 处理 numpy bool
+        if isinstance(val, np.bool_):
+            return bool(val)
+        return bool(val)
+    except (ValueError, TypeError):
+        return default
 
 
-# ============================================================
-# 获取沪深300指数（只读指数，不读全市场）
-# ============================================================
+def convert_to_json_serializable(obj):
+    """递归转换对象为 JSON 可序列化类型"""
+    if isinstance(obj, dict):
+        return {k: convert_to_json_serializable(v) for k, v in obj.items()}
+    elif isinstance(obj, (list, tuple)):
+        return [convert_to_json_serializable(v) for v in obj]
+    elif isinstance(obj, np.integer):
+        return int(obj)
+    elif isinstance(obj, np.floating):
+        return float(obj)
+    elif isinstance(obj, np.bool_):
+        return bool(obj)
+    elif isinstance(obj, pd.Timestamp):
+        return obj.strftime('%Y-%m-%d')
+    elif hasattr(obj, 'isoformat'):  # datetime
+        return obj.isoformat()
+    else:
+        return obj
+
+
+def get_stock_data(ticker, name):
+    """
+    获取单只股票数据（使用 yfinance）
+    返回：dict with price, change_pct, pe, pb, dividend_yield, market_cap
+    """
+    try:
+        stock = yf.Ticker(ticker)
+        info = stock.info
+        
+        # 获取当前价格和涨跌幅
+        price = safe_float(info.get("currentPrice") or info.get("regularMarketPrice"))
+        previous_close = safe_float(info.get("previousClose"))
+        
+        if price and previous_close:
+            change_pct = round((price - previous_close) / previous_close * 100, 2)
+        else:
+            change_pct = None
+        
+        # 获取估值指标
+        pe = safe_float(info.get("trailingPE") or info.get("forwardPE"))
+        pb = safe_float(info.get("priceToBook"))
+        market_cap = safe_float(info.get("marketCap"))
+        
+        # 股息率（Yahoo Finance 返回的是小数，需要 *100）
+        dividend_yield = safe_float(info.get("dividendYield"))
+        if dividend_yield:
+            # 如果 < 1，说明是小数（如 0.0532 表示 5.32%），需要 *100
+            # 如果 > 1，说明已经是百分比（如 5.32 表示 5.32%），不再 *100
+            if dividend_yield < 1:
+                dividend_yield = round(dividend_yield * 100, 2)
+            else:
+                dividend_yield = round(dividend_yield, 2)
+        else:
+            dividend_yield = None
+        
+        logger.info(f"   ✅ {name} ({ticker}): 价格={price}, 涨跌幅={change_pct}%, PE={pe}, PB={pb}, 股息率={dividend_yield}%")
+        
+        return {
+            "price": price,
+            "change_pct": change_pct,
+            "pe": pe,
+            "pb": pb,
+            "dividend_yield": dividend_yield,
+            "market_cap": round(market_cap / 100000000, 2) if market_cap else None,  # 转换为亿
+        }
+    except Exception as e:
+        logger.warning(f"   ⚠️  {name} ({ticker}) 获取失败: {e}")
+        return None
+
+
 def get_hs300_data():
     """
-    获取沪深300指数行情 + 历史数据（近35日）
-    用于计算成交量萎缩 & 恐慌信号
+    获取沪深300指数数据（使用 yfinance）
+    返回：dict with price, change_pct, volume, volume_20d_avg, volume_shrink, panic_signal
     """
-    logger.info("📡 获取沪深300指数数据...")
+    logger.info("📡 正在获取沪深300指数数据...")
     result = {
         "price": None,
         "change_pct": None,
@@ -112,257 +168,217 @@ def get_hs300_data():
         "panic_signal": False,
         "panic_reason": "",
     }
-
-    # 获取沪深300近期历史数据（含今日）
-    today = datetime.date.today()
-    start_date = (today - datetime.timedelta(days=35)).strftime("%Y%m%d")
-    end_date = today.strftime("%Y%m%d")
-
-    df_hist = fetch_with_retry(
-        ak.stock_zh_index_daily_em,
-        symbol="000300", start_date=start_date, end_date=end_date
-    )
-    if df_hist is None or df_hist.empty:
-        logger.warning("   ⚠️  沪深300历史数据获取失败")
-        return result
-
-    # 兼容不同版本的列名
-    date_col = df_hist.columns[0]
-    vol_col = df_hist.columns[-2]
-    chg_col = df_hist.columns[2] if len(df_hist.columns) > 2 else df_hist.columns[-1]
-    for c in df_hist.columns:
-        cl = c.strip().lower()
-        if '日期' in cl or 'date' in cl:
-            date_col = c
-        if '成交' in cl or 'vol' in cl:
-            vol_col = c
-        if '涨跌' in cl or 'change' in cl or '涨跌幅' in cl:
-            chg_col = c
-
-    df_hist[date_col] = pd.to_datetime(df_hist[date_col]).dt.strftime("%Y%m%d")
-    df_hist = df_hist.sort_values(date_col).reset_index(drop=True)
-    df_hist['_vol_yi'] = df_hist[vol_col].astype(float) / 100000000
-
-    latest_row = df_hist.iloc[-1]
-    latest_volume_yi = float(latest_row['_vol_yi'])
-
-    # 最新价 & 涨跌幅（ from 历史数据最后一行）
-    close_val = safe_float(latest_row.get("收盘") or latest_row.get("close") or latest_row.get("指数收盘"))
-    open_val = safe_float(latest_row.get("开盘") or latest_row.get("open") or latest_row.get("指数开盘"))
-    result["price"] = close_val
-    if close_val and open_val:
-        result["change_pct"] = round((close_val - open_val) / open_val * 100, 2)
-
-    logger.info(f"   ✅ 沪深300 最新价={result['price']}, 涨跌幅={result['change_pct']}%")
-
-    # 计算成交量萎缩
-    hist_20 = df_hist.iloc[-21:-1]
-    if len(hist_20) >= 5:
-        avg_20 = hist_20['_vol_yi'].astype(float).mean()
-        result["volume_20d_avg"] = round(avg_20, 2)
-        shrink1 = latest_volume_yi < avg_20 * 0.5
-        shrink2 = latest_volume_yi < 2000
-        result["volume_shrink"] = shrink1 and shrink2
-        reasons = []
-        if shrink1:
-            reasons.append(f"成交额 {latest_volume_yi:.0f}亿 < 近20日均值({avg_20:.0f}亿)的50%")
-        if shrink2:
-            reasons.append(f"成交额 {latest_volume_yi:.0f}亿 < 2000亿")
-        if reasons:
-            result["volume_shrink_reason"] = "，且".join(reasons)
-        else:
-            result["volume_shrink_reason"] = f"成交额 {latest_volume_yi:.0f}亿，近20日均值 {avg_20:.0f}亿，未明显萎缩"
-        logger.info(f"   ✅ 沪深300 成交量萎缩={result['volume_shrink']}")
-
-    # 恐慌信号（单日跌幅 > 2.5%）
-    if result["change_pct"] is not None:
-        result["panic_signal"] = result["change_pct"] < -2.5
-        if result["panic_signal"]:
-            reason = f"沪深300单日跌幅 {result['change_pct']:.2f}%（超过2.5%警戒线）"
-            if result["volume_shrink"]:
-                reason += "，且成交量萎缩"
-            result["panic_reason"] = reason
-        else:
-            result["panic_reason"] = f"沪深300涨跌幅 {result['change_pct']:.2f}%，未达恐慌线（-2.5%）"
-
+    
+    try:
+        # 沪深300 ETF (510300.SS) 作为替代
+        hs300 = yf.Ticker("000300.SS")
+        info = hs300.info
+        
+        price = safe_float(info.get("regularMarketPrice"))
+        previous_close = safe_float(info.get("previousClose"))
+        
+        if price and previous_close:
+            change_pct = round((price - previous_close) / previous_close * 100, 2)
+            result["price"] = price
+            result["change_pct"] = change_pct
+            logger.info(f"   ✅ 沪深300: 价格={price}, 涨跌幅={change_pct}%")
+        
+        # 获取历史数据（计算成交量和恐慌信号）
+        hist = hs300.history(period="1mo")
+        if not hist.empty:
+            # 计算20日平均成交量
+            hist['volume_ma20'] = hist['Volume'].rolling(window=20).mean()
+            latest = hist.iloc[-1]
+            latest_volume = latest['Volume'] / 100000000  # 转换为亿
+            avg_20 = latest['volume_ma20'] / 100000000
+            
+            result["volume"] = round(latest_volume, 2)
+            result["volume_20d_avg"] = round(avg_20, 2)
+            
+            # 成交量萎缩判断
+            shrink1 = latest_volume < avg_20 * 0.5
+            shrink2 = latest_volume < 2000
+            result["volume_shrink"] = shrink1 and shrink2
+            
+            if shrink1:
+                result["volume_shrink_reason"] = f"成交额 {latest_volume:.0f}亿 < 近20日均值({avg_20:.0f}亿)的50%"
+            if shrink2:
+                if result["volume_shrink_reason"]:
+                    result["volume_shrink_reason"] += "，且"
+                result["volume_shrink_reason"] += f"成交额 {latest_volume:.0f}亿 < 2000亿"
+            if not result["volume_shrink"]:
+                result["volume_shrink_reason"] = f"成交额 {latest_volume:.0f}亿，近20日均值 {avg_20:.0f}亿，未明显萎缩"
+            
+            logger.info(f"   ✅ 沪深300 成交量萎缩={result['volume_shrink']}")
+            
+            # 恐慌信号：单日跌幅 > 2.5%
+            if result["change_pct"] is not None:
+                change = result["change_pct"]
+                result["panic_signal"] = change < -2.5
+                if result["panic_signal"]:
+                    reason = f"沪深300单日跌幅 {change:.2f}%（超过2.5%警戒线）"
+                    if result["volume_shrink"]:
+                        reason += "，且成交量萎缩"
+                    result["panic_reason"] = reason
+                else:
+                    result["panic_reason"] = f"沪深300涨跌幅 {change:.2f}%，未达恐慌线（-2.5%）"
+        
+    except Exception as e:
+        logger.warning(f"   ⚠️  沪深300数据获取失败（不影响主功能）: {e}")
+    
     return result
 
 
-# ============================================================
-# 获取单只股票（只拉取指定股票，不碰全市场接口）
-# ============================================================
-def get_single_stock(code, name):
-    """
-    用 stock_zh_a_hist 获取单只股票最新数据
-    这是最温和的接口，不会被限流
-    返回 dict 或 None
-    """
-    def _fetch():
-        today = datetime.date.today()
-        start = (today - datetime.timedelta(days=5)).strftime("%Y%m%d")
-        end = today.strftime("%Y%m%d")
-        df = ak.stock_zh_a_hist(
-            symbol=code, period="daily",
-            start_date=start, end_date=end, adjust="qfq"
-        )
-        if df is None or df.empty:
-            return None
-        latest = df.iloc[-1]
-        close_val = safe_float(latest.get("收盘") or latest.get("close"))
-        open_val = safe_float(latest.get("开盘") or latest.get("open"))
-        chg = round((close_val - open_val) / open_val * 100, 2) if close_val and open_val else None
-        return {
-            "price": close_val,
-            "change_pct": chg,
-        }
-
-    result = fetch_with_retry(_fetch)
-    if result:
-        logger.info(f"   ✅ {code} {name}: 现价={result['price']}, 涨跌幅={result['change_pct']}%")
-    else:
-        logger.warning(f"   ⚠️  {code} {name}: 数据获取失败")
-    return result
-
-
-# ============================================================
-# 计算买入信号
-# ============================================================
 def calculate_buy_signals(stock_data, hs300_data):
-    signals = []
-    score = 0
-
-    # 1. 恐慌性下跌
-    if hs300_data.get("panic_signal"):
-        signals.append("😱 恐慌性下跌：沪深300单日跌幅超2.5%")
-        score += 40
-    elif hs300_data.get("change_pct") is not None and hs300_data["change_pct"] < -1.5:
-        signals.append("⚠️ 大盘弱势：沪深300今日下跌")
-        score += 10
-
-    # 2. 成交量萎缩
-    if hs300_data.get("volume_shrink"):
-        signals.append("📉 成交量萎缩：市场观望，可能临近底部")
-        score += 20
-
-    # 3. 年底布局窗口
-    month = datetime.date.today().month
-    if month in [11, 12]:
-        signals.append("📅 年底布局窗口：机构调仓，历史上有年底行情")
-        score += 15
-
-    # 4. 分红季
-    if month in [5, 6, 7]:
-        signals.append("🎁 临近分红季（6-7月），现在布局可吃分红")
-        score += 15
-
-    # 5. 估值安全边际
+    """
+    计算买入信号
+    根据用户的选股标准：
+    - 银行：PE<5, PB<0.65, 股息率>5%
+    - 能源通信：股息率>6%
+    - 保险：PEV<0.7（用PB近似）
+    - 成长股：PE<15
+    """
+    category = stock_data["category"]
+    pe = stock_data.get("pe")
+    pb = stock_data.get("pb")
+    dividend = stock_data.get("dividend_yield")
     target = stock_data.get("dividend_yield_target", 0)
-    real = stock_data.get("dividend_yield_real") or 0
-    if target > 0 and real >= target * 0.7:
-        signals.append(f"💰 股息率 {real:.2f}% 接近目标 {target:.2f}%（已达70%以上）")
+    
+    reasons = []
+    score = 0
+    
+    # 行业特定信号
+    if category == "银行":
+        if pe and pe < 5:
+            reasons.append(f"✅ PE={pe:.2f} < 5（低估）")
+            score += 30
+        if pb and pb < 0.65:
+            reasons.append(f"✅ PB={pb:.2f} < 0.65（破净）")
+            score += 30
+        if dividend and dividend > 5:
+            reasons.append(f"✅ 股息率={dividend:.2f}% > 5%（高股息）")
+            score += 20
+        if dividend and target and dividend >= target * 0.8:
+            reasons.append(f"🎁 股息率={dividend:.2f}%，接近目标({target}%)")
+            score += 20
+    
+    elif category == "能源通信":
+        if dividend and dividend > 6:
+            reasons.append(f"✅ 股息率={dividend:.2f}% > 6%（高股息）")
+            score += 40
+        if pe and pe < 10:
+            reasons.append(f"✅ PE={pe:.2f} < 10（低估）")
+            score += 30
+    
+    elif category == "保险":
+        if pb and pb < 0.7:
+            reasons.append(f"✅ PB={pb:.2f} < 0.7（低估）")
+            score += 40
+        if dividend and dividend > 3:
+            reasons.append(f"✅ 股息率={dividend:.2f}% > 3%")
+            score += 30
+    
+    elif category == "成长股":
+        if pe and pe < 15:
+            reasons.append(f"🚀 PE={pe:.2f} < 15（波段机会）")
+            score += 50
+        if pb and pb < 3:
+            reasons.append(f"✅ PB={pb:.2f} < 3（合理估值）")
+            score += 30
+    
+    # 大盘恐慌信号（加分）
+    if hs300_data.get("panic_signal"):
+        reasons.append(f"🔥 大盘恐慌：{hs300_data['panic_reason']}")
         score += 20
-
-    if not signals:
-        signals.append("😴 当前无明显买入信号，建议观望")
-
+    elif hs300_data.get("volume_shrink"):
+        reasons.append(f"📉 成交量萎缩：{hs300_data['volume_shrink_reason']}")
+        score += 10
+    
+    # 分红季（6-7月）
+    now = datetime.datetime.now()
+    if now.month in [6, 7]:
+        reasons.append("🎁 临近分红季（6-7月），现在布局可吃分红")
+        score += 15
+    
+    # 年末（12月）
+    if now.month == 12:
+        reasons.append("🎄 年末，机构做市值行情")
+        score += 10
+    
+    # 确定信号等级
     if score >= 50:
         signal = "green"
-        advice = "🟢 可以买入（多个买入窗口叠加）"
-    elif score >= 25:
+        advice = "🟢 可买入"
+    elif score >= 30:
         signal = "yellow"
-        advice = "🟡 可以小幅建仓（部分信号出现）"
+        advice = "🟡 观望"
     else:
         signal = "red"
+        if not reasons:
+            reasons.append("😴 当前无明显买入信号，建议观望")
         advice = "🔴 不建议（等待更好买点）"
-
+    
     return {
         "signal": signal,
         "score": score,
-        "reasons": signals,
+        "reasons": reasons,
         "advice": advice,
     }
 
 
-# ============================================================
-# 股票列表
-# ============================================================
-STOCK_LIST = [
-    {"code": "601328", "name": "交通银行", "category": "银行", "dividend_yield_target": 5.62},
-    {"code": "601166", "name": "兴业银行", "category": "银行", "dividend_yield_target": 5.21},
-    {"code": "601998", "name": "中信银行", "category": "银行", "dividend_yield_target": 5.17},
-    {"code": "601288", "name": "农业银行", "category": "银行", "dividend_yield_target": 4.61},
-    {"code": "601398", "name": "工商银行", "category": "银行", "dividend_yield_target": 4.22},
-    {"code": "601939", "name": "建设银行", "category": "银行", "dividend_yield_target": 4.05},
-    {"code": "601988", "name": "中国银行", "category": "银行", "dividend_yield_target": 3.97},
-    {"code": "601658", "name": "邮储银行", "category": "银行", "dividend_yield_target": 3.43},
-    {"code": "600036", "name": "招商银行", "category": "银行", "dividend_yield_target": 2.85},
-    {"code": "600941", "name": "中国移动", "category": "通信", "dividend_yield_target": 7.85},
-    {"code": "600938", "name": "中国海油", "category": "能源", "dividend_yield_target": 6.28},
-    {"code": "601857", "name": "中国石油", "category": "能源", "dividend_yield_target": 4.83},
-    {"code": "601318", "name": "中国平安", "category": "保险", "dividend_yield_target": 3.86},
-    {"code": "601628", "name": "中国人寿", "category": "保险", "dividend_yield_target": 3.02},
-    {"code": "300750", "name": "宁德时代", "category": "成长股", "dividend_yield_target": 0.41},
-]
-
-
-# ============================================================
-# 主流程
-# ============================================================
-def main():
-    logger.info("=" * 50)
-    logger.info("🚀 A股15只赚钱天团股票监测系统 开始运行")
-    logger.info("=" * 50)
-
-    # 1. 获取沪深300指数（只读1个指数，不读全市场）
-    hs300_data = get_hs300_data()
-    logger.info(f"   沪深300: {hs300_data['price']} ({hs300_data['change_pct']}%)")
-
-    # 2. 逐只获取15只股票（每只间隔2秒，避免限流）
+def build_stock_data(hs300_data):
+    """构建所有股票的数据"""
+    logger.info("📊 开始获取15只股票数据...")
     categories = {"银行": [], "能源通信": [], "保险": [], "成长股": []}
     summary = {"total_stocks": 15, "green_count": 0, "yellow_count": 0, "red_count": 0}
-
-    for idx, stock in enumerate(STOCK_LIST):
-        code = stock["code"]
-        name = stock["name"]
-        category = stock["category"]
-        logger.info(f"   🔍 [{idx+1}/15] {code} {name} ...")
-
-        # 只拉取这一只股票的数据（不碰全市场接口）
-        info = get_single_stock(code, name)
-
-        if info is None:
-            info = {"price": None, "change_pct": None}
-
-        # 组装股票数据
+    
+    for idx, (code, info) in enumerate(STOCK_MAP.items()):
+        name = info["name"]
+        category = info["category"]
+        ticker = info["ticker"]
+        
+        logger.info(f"   🔍 处理 {code} {name} ({idx+1}/15)...")
+        
+        # 获取股票数据
+        stock_info = get_stock_data(ticker, name)
+        
+        if stock_info is None:
+            stock_info = {
+                "price": None, "change_pct": None, "pe": None, "pb": None,
+                "dividend_yield": None, "market_cap": None,
+                "error": "数据获取失败"
+            }
+        
+        # 组装最终数据
         stock_data = {
             "code": code,
             "name": name,
             "category": category,
-            "price": info.get("price"),
-            "change_pct": info.get("change_pct"),
-            "pe": None,
-            "pb": None,
-            "pev": None,
-            "dividend_yield_real": None,
-            "dividend_yield_target": stock["dividend_yield_target"],
-            "market_cap": None,
+            "price": stock_info.get("price"),
+            "change_pct": stock_info.get("change_pct"),
+            "pe": stock_info.get("pe"),
+            "pb": stock_info.get("pb"),
+            "pev": stock_info.get("pb"),  # 保险股的PEV用PB近似
+            "dividend_yield_real": stock_info.get("dividend_yield"),
+            "dividend_yield_target": DIVIDEND_TARGET.get(code, 0),
+            "market_cap": stock_info.get("market_cap"),
         }
-
+        
         # 计算买入信号
         signal_result = calculate_buy_signals(stock_data, hs300_data)
         stock_data.update(signal_result)
-
+        
         # 分类归档
         if category == "银行":
             categories["银行"].append(stock_data)
-        elif category in ("能源", "通信"):
+        elif category in ["能源", "通信"]:
             categories["能源通信"].append(stock_data)
         elif category == "保险":
             categories["保险"].append(stock_data)
         elif category == "成长股":
             categories["成长股"].append(stock_data)
-
-        # 统计
+        
+        # 统计信号
         sig = signal_result["signal"]
         if sig == "green":
             summary["green_count"] += 1
@@ -370,23 +386,41 @@ def main():
             summary["yellow_count"] += 1
         else:
             summary["red_count"] += 1
-
-        # 每只间隔2秒，避免触发限流
-        if idx < len(STOCK_LIST) - 1:
+        
+        # 每只股票请求后延迟 2 秒，避免触发限流
+        if idx < len(STOCK_MAP) - 1:
             time.sleep(2)
+    
+    return categories, summary
 
-    # 3. 输出 data.json
+
+# ============================================================
+# 主函数
+# ============================================================
+def main():
+    logger.info("=" * 50)
+    logger.info("🚀 A股15只赚钱天团股票监测系统 开始运行")
+    logger.info("=" * 50)
+    
+    # 获取沪深300数据
+    hs300_data = get_hs300_data()
+    logger.info(f"沪深300 结果: price={hs300_data['price']}, change_pct={hs300_data['change_pct']}%")
+    
+    # 获取所有股票数据
+    categories, summary = build_stock_data(hs300_data)
+    
+    # 输出 data.json（确保 JSON 可序列化）
     output = {
         "update_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
         "data_date": datetime.date.today().strftime("%Y-%m-%d"),
-        "hs300": hs300_data,
-        "categories": categories,
-        "summary": summary,
+        "hs300": convert_to_json_serializable(hs300_data),
+        "categories": convert_to_json_serializable(categories),
+        "summary": convert_to_json_serializable(summary),
     }
-
+    
     with open("data.json", "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2)
-
+    
     logger.info("=" * 50)
     logger.info(f"✅ 数据已保存到 data.json")
     logger.info(f"   沪深300: {hs300_data['price']} ({hs300_data['change_pct']}%)")
