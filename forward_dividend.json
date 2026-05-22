@@ -6,11 +6,15 @@
         "报告时间": "2025半年报",
         "分红说明": "10派1.563元(含税)",
         "每股分红": 0.1563
+      },
+      {
+        "报告时间": "2025年报",
+        "分红说明": "10派1.684元(含税)",
+        "每股分红": 0.1684
       }
     ],
-    "total_dividend_per_share": 0.1563,
-    "forward_dividend_yield_base": 0.1563,
-    "note": "缺少2025年报预案数据，请补充"
+    "total_dividend_per_share": 0.3247,
+    "forward_dividend_yield_base": 0.3247
   },
   "601166": {
     "name": "兴业银行",
@@ -24,10 +28,15 @@
         "报告时间": "2025年报预案",
         "分红说明": "10派5.01元(含税)",
         "每股分红": 0.501
+      },
+      {
+        "报告时间": "2025年报",
+        "分红说明": "10派5.01元(含税)",
+        "每股分红": 0.501
       }
     ],
-    "total_dividend_per_share": 1.066,
-    "forward_dividend_yield_base": 1.066
+    "total_dividend_per_share": 1.567,
+    "forward_dividend_yield_base": 1.567
   },
   "601998": {
     "name": "中信银行",
@@ -36,11 +45,15 @@
         "报告时间": "2025半年报",
         "分红说明": "10派1.88元(含税)",
         "每股分红": 0.188
+      },
+      {
+        "报告时间": "2025年报",
+        "分红说明": "10派1.93元(含税)",
+        "每股分红": 0.193
       }
     ],
-    "total_dividend_per_share": 0.188,
-    "forward_dividend_yield_base": 0.188,
-    "note": "缺少2025年报预案数据，请补充"
+    "total_dividend_per_share": 0.381,
+    "forward_dividend_yield_base": 0.381
   },
   "601288": {
     "name": "农业银行",
@@ -83,11 +96,15 @@
         "报告时间": "2025半年报",
         "分红说明": "10派1.858元(含税)",
         "每股分红": 0.1858
+      },
+      {
+        "报告时间": "2025年报",
+        "分红说明": "10派2.029元(含税)",
+        "每股分红": 0.2029
       }
     ],
-    "total_dividend_per_share": 0.1858,
-    "forward_dividend_yield_base": 0.1858,
-    "note": "缺少2025年报预案数据，请补充"
+    "total_dividend_per_share": 0.3887,
+    "forward_dividend_yield_base": 0.3887
   },
   "601988": {
     "name": "中国银行",
@@ -96,11 +113,15 @@
         "报告时间": "2025半年报",
         "分红说明": "10派1.094元(含税)",
         "每股分红": 0.1094
+      },
+      {
+        "报告时间": "2025年报",
+        "分红说明": "10派1.169元(含税)",
+        "每股分红": 0.1169
       }
     ],
-    "total_dividend_per_share": 0.1094,
-    "forward_dividend_yield_base": 0.1094,
-    "note": "缺少2025年报预案数据，请补充"
+    "total_dividend_per_share": 0.2263,
+    "forward_dividend_yield_base": 0.2263
   },
   "601658": {
     "name": "邮储银行",
@@ -109,11 +130,15 @@
         "报告时间": "2025半年报",
         "分红说明": "10派1.23元(含税)",
         "每股分红": 0.123
+      },
+      {
+        "报告时间": "2025年报",
+        "分红说明": "10派0.953元(含税)",
+        "每股分红": 0.0953
       }
     ],
-    "total_dividend_per_share": 0.123,
-    "forward_dividend_yield_base": 0.123,
-    "note": "缺少2025年报预案数据，请补充"
+    "total_dividend_per_share": 0.2183,
+    "forward_dividend_yield_base": 0.2183
   },
   "600036": {
     "name": "招商银行",
@@ -122,11 +147,15 @@
         "报告时间": "2025半年报",
         "分红说明": "10派10.13元(含税)",
         "每股分红": 1.013
+      },
+      {
+        "报告时间": "2025年报",
+        "分红说明": "10派10.030元(含税)",
+        "每股分红": 1.003
       }
     ],
-    "total_dividend_per_share": 1.013,
-    "forward_dividend_yield_base": 1.013,
-    "note": "缺少2025年报预案数据，请补充"
+    "total_dividend_per_share": 2.016,
+    "forward_dividend_yield_base": 2.016
   },
   "600941": {
     "name": "中国移动",
@@ -135,11 +164,15 @@
         "报告时间": "2025半年报",
         "分红说明": "10派25.025元(含税)",
         "每股分红": 2.5025
+      },
+      {
+        "报告时间": "2025年报",
+        "分红说明": "10派22.012元(含税)",
+        "每股分红": 2.2012
       }
     ],
-    "total_dividend_per_share": 2.5025,
-    "forward_dividend_yield_base": 2.5025,
-    "note": "缺少2025年报预案数据，请补充"
+    "total_dividend_per_share": 4.7037,
+    "forward_dividend_yield_base": 4.7037
   },
   "600938": {
     "name": "中国海油",
@@ -148,11 +181,15 @@
         "报告时间": "2025半年报",
         "分红说明": "10派6.6612元(含税)",
         "每股分红": 0.66612
+      },
+      {
+        "报告时间": "2025年报",
+        "分红说明": "10派4.859635元(含税)",
+        "每股分红": 0.486
       }
     ],
-    "total_dividend_per_share": 0.66612,
-    "forward_dividend_yield_base": 0.66612,
-    "note": "缺少2025年报预案数据，请补充"
+    "total_dividend_per_share": 1.1521,
+    "forward_dividend_yield_base": 1.1521
   },
   "601857": {
     "name": "中国石油",
@@ -161,11 +198,15 @@
         "报告时间": "2025半年报",
         "分红说明": "10派2.2元(含税)",
         "每股分红": 0.22
+      },
+      {
+        "报告时间": "2025年报",
+        "分红说明": "10派2.5元(含税)",
+        "每股分红": 0.25
       }
     ],
-    "total_dividend_per_share": 0.22,
-    "forward_dividend_yield_base": 0.22,
-    "note": "缺少2025年报预案数据，请补充"
+    "total_dividend_per_share": 0.47,
+    "forward_dividend_yield_base": 0.47
   },
   "601318": {
     "name": "中国平安",
@@ -174,11 +215,15 @@
         "报告时间": "2025半年报",
         "分红说明": "10派9.5元(含税)",
         "每股分红": 0.95
+      },
+      {
+        "报告时间": "2025年报",
+        "分红说明": "10派17.50元(含税)",
+        "每股分红": 1.75
       }
     ],
-    "total_dividend_per_share": 0.95,
-    "forward_dividend_yield_base": 0.95,
-    "note": "缺少2025年报预案数据，请补充"
+    "total_dividend_per_share": 2.7,
+    "forward_dividend_yield_base": 2.7
   },
   "601628": {
     "name": "中国人寿",
@@ -187,11 +232,15 @@
         "报告时间": "2025半年报",
         "分红说明": "10派2.38元(含税)",
         "每股分红": 0.238
+      },
+      {
+        "报告时间": "2025年报",
+        "分红说明": "10派6.180元(含税)",
+        "每股分红": 0.618
       }
     ],
-    "total_dividend_per_share": 0.238,
-    "forward_dividend_yield_base": 0.238,
-    "note": "缺少2025年报预案数据，请补充"
+    "total_dividend_per_share": 0.856,
+    "forward_dividend_yield_base": 0.856
   },
   "300750": {
     "name": "宁德时代",
