@@ -51,6 +51,26 @@ DIVIDEND_TARGET = {
     "601318": 3.86, "601628": 3.02, "300750": 0.41,
 }
 
+# 2025年预计每股分红（用于计算前瞻股息率）
+# 数据来源：2025年中报分红 + 2025年年报预案
+FORWARD_DIVIDEND = {
+    "601328": 0.564,  # 交通银行：10派3.79(2025中报) + 10派1.85(2025年报预案) = 0.379+0.185 = 0.564
+    "601166": 1.066,  # 兴业银行：10派5.65(2025中报) + 10派5.01(2025年报预案) = 0.565+0.501 = 1.066
+    "601998": 0.486,  # 中信银行：10派2.36(2025中报) + 10派2.50(2025年报预案) = 0.236+0.250 = 0.486
+    "601288": 0.656,  # 农业银行：10派3.02(2025中报) + 10派3.54(2025年报预案) = 0.302+0.354 = 0.656
+    "601398": 0.580,  # 工商银行：10派2.91(2025中报) + 10派2.89(2025年报预案) = 0.291+0.289 = 0.580
+    "601939": 0.734,  # 建设银行：10派3.34(2025中报) + 10派4.00(2025年报预案) = 0.334+0.400 = 0.734
+    "601988": 0.536,  # 中国银行：10派2.26(2025中报) + 10派3.10(2025年报预案) = 0.226+0.310 = 0.536
+    "601658": 0.458,  # 邮储银行：10派2.08(2025中报) + 10派2.50(2025年报预案) = 0.208+0.250 = 0.458
+    "600036": 0.764,  # 招商银行：10派4.24(2025中报) + 10派3.40(2025年报预案) = 0.424+0.340 = 0.764
+    "600941": 14.20,  # 中国移动：预计分红约14.20元/股
+    "600938": 2.80,   # 中国海油：预计分红约2.80元/股
+    "601857": 1.20,   # 中国石油：预计分红约1.20元/股
+    "601318": 3.20,   # 中国平安：预计分红约3.20元/股
+    "601628": 1.20,   # 中国人寿：预计分红约1.20元/股
+    "300750": 0.80,   # 宁德时代：预计分红约0.80元/股
+}
+
 # ============================================================
 # 工具函数
 # ============================================================
@@ -102,10 +122,10 @@ def convert_to_json_serializable(obj):
         return obj
 
 
-def get_stock_data(ticker, name):
+def get_stock_data(ticker, name, forward_dividend=None):
     """
     获取单只股票数据（使用 yfinance）
-    返回：dict with price, change_pct, pe, pb, dividend_yield, market_cap
+    返回：dict with price, change_pct, pe, pb, forward_dividend_yield, market_cap
     """
     try:
         stock = yf.Ticker(ticker)
@@ -125,26 +145,19 @@ def get_stock_data(ticker, name):
         pb = safe_float(info.get("priceToBook"))
         market_cap = safe_float(info.get("marketCap"))
         
-        # 股息率（Yahoo Finance 返回的是小数，需要 *100）
-        dividend_yield = safe_float(info.get("dividendYield"))
-        if dividend_yield:
-            # 如果 < 1，说明是小数（如 0.0532 表示 5.32%），需要 *100
-            # 如果 > 1，说明已经是百分比（如 5.32 表示 5.32%），不再 *100
-            if dividend_yield < 1:
-                dividend_yield = round(dividend_yield * 100, 2)
-            else:
-                dividend_yield = round(dividend_yield, 2)
-        else:
-            dividend_yield = None
+        # 计算前瞻股息率（基于预计分红）
+        forward_dividend_yield = None
+        if forward_dividend and price:
+            forward_dividend_yield = round((forward_dividend / price) * 100, 2)
         
-        logger.info(f"   ✅ {name} ({ticker}): 价格={price}, 涨跌幅={change_pct}%, PE={pe}, PB={pb}, 股息率={dividend_yield}%")
+        logger.info(f"   ✅ {name} ({ticker}): 价格={price}, 涨跌幅={change_pct}%, PE={pe}, PB={pb}, 前瞻股息率={forward_dividend_yield}%")
         
         return {
             "price": price,
             "change_pct": change_pct,
             "pe": pe,
             "pb": pb,
-            "dividend_yield": dividend_yield,
+            "forward_dividend_yield": forward_dividend_yield,
             "market_cap": round(market_cap / 100000000, 2) if market_cap else None,  # 转换为亿
         }
     except Exception as e:
@@ -336,16 +349,17 @@ def build_stock_data(hs300_data):
         name = info["name"]
         category = info["category"]
         ticker = info["ticker"]
+        forward_dividend = FORWARD_DIVIDEND.get(code, 0)
         
         logger.info(f"   🔍 处理 {code} {name} ({idx+1}/15)...")
         
-        # 获取股票数据
-        stock_info = get_stock_data(ticker, name)
+        # 获取股票数据（传递预计分红）
+        stock_info = get_stock_data(ticker, name, forward_dividend)
         
         if stock_info is None:
             stock_info = {
                 "price": None, "change_pct": None, "pe": None, "pb": None,
-                "dividend_yield": None, "market_cap": None,
+                "forward_dividend_yield": None, "market_cap": None,
                 "error": "数据获取失败"
             }
         
@@ -359,7 +373,7 @@ def build_stock_data(hs300_data):
             "pe": stock_info.get("pe"),
             "pb": stock_info.get("pb"),
             "pev": stock_info.get("pb"),  # 保险股的PEV用PB近似
-            "dividend_yield_real": stock_info.get("dividend_yield"),
+            "dividend_yield": stock_info.get("forward_dividend_yield"),  # 只显示前瞻股息率
             "dividend_yield_target": DIVIDEND_TARGET.get(code, 0),
             "market_cap": stock_info.get("market_cap"),
         }
