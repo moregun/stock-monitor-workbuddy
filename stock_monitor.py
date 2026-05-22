@@ -133,10 +133,10 @@ def get_realtime_data():
 def get_stock_by_hist(code, name):
     """
     备用方案：用 stock_zh_a_hist 获取单只股票的最新数据
-    这个接口使用不同数据源，在境外服务器上更可靠
+    带超时控制（15秒），避免在境外环境挂起
     返回：dict with price, change_pct or None
     """
-    try:
+    def _fetch():
         today = datetime.date.today()
         start = (today - datetime.timedelta(days=5)).strftime("%Y%m%d")
         end = today.strftime("%Y%m%d")
@@ -156,9 +156,11 @@ def get_stock_by_hist(code, name):
             "dividend_yield": None,
             "market_cap": None,
         }
-    except Exception as e:
-        print(f"   ⚠️  {code} {name} 备用方案失败: {e}")
-        return None
+    
+    result = call_with_timeout(lambda: _fetch(), timeout_sec=15)
+    if result is None:
+        print(f"   ⚠️  {code} {name} 备用方案超时或失败")
+    return result
 
 
 def get_hs300_by_hist():
