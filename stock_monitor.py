@@ -2,7 +2,7 @@
 """
 A股15只赚钱天团股票监测系统
 使用 yfinance 获取数据（境外服务器稳定）
-分红数据从 FORWARD_DIVIDEND.json 读取
+分红数据从 forward_dividend.json 读取
 """
 
 import json
@@ -26,7 +26,7 @@ logger = logging.getLogger(__name__)
 # ============================================================
 # 读取分红数据（从 JSON 文件）
 # ============================================================
-FORWARD_DIVIDEND_FILE = "FORWARD_DIVIDEND.json"
+FORWARD_DIVIDEND_FILE = "forward_dividend.json"
 
 def load_forward_dividend():
     """读取前瞻分红数据"""
@@ -373,6 +373,7 @@ def build_stock_data(hs300_data):
             "category": category,
             "price": stock_info.get("price"),
             "change_pct": stock_info.get("change_pct"),
+            "forward_dividend": forward_dividend,  # 当年每股分红
             "pe": stock_info.get("pe"),
             "pb": stock_info.get("pb"),
             "pev": stock_info.get("pb"),  # 保险股的PEV用PB近似

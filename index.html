@@ -517,6 +517,7 @@ function renderCategory(title, stocks) {
       '<td class="td-name">' + s.name + '</td>' +
       '<td>' + s.category + '</td>' +
       '<td>' + price + ' <span class="' + chgCls + '">' + (s.change_pct > 0 ? '+' : '') + chg + '</span></td>' +
+      '<td>' + (s.forward_dividend !== null && s.forward_dividend !== undefined ? s.forward_dividend.toFixed(3) : '--') + ' 元</td>' +
       '<td>' + yieldVal + '%</td>' +
       '<td>' + pe + '</td>' +
       '<td class="' + (pbCls === 'good' ? 'metric-value good' : pbCls === 'warn' ? 'metric-value warn' : '') + '">' + pb + '</td>';
@@ -535,6 +536,7 @@ function renderCategory(title, stocks) {
     '<th>名称</th>' +
     '<th>类型</th>' +
     '<th>现价</th>' +
+    '<th>当年股息</th>' +
     '<th>股息率(%)</th>' +
     '<th>PE（动态）</th>' +
     '<th>PB（市净率）</th>';
