@@ -90,6 +90,7 @@
     .hs300-change.down { color: #00e676; background: rgba(0,230,118,0.12); }
     .hs300-change.flat { color: #8b949e; }
     .hs300-reason { font-size: 13px; color: #8b949e; }
+    .hs300-volume { font-size: 13px; color: #8b949e; margin-top: 6px; line-height: 1.8; }
 
     /* 中列：信号统计 */
     .hs300-center { display: flex; gap: 12px; flex-wrap: wrap; }
@@ -290,6 +291,7 @@
       <span class="hs300-change" id="hs300-change">--</span>
     </div>
     <div class="hs300-reason" id="hs300-reason"></div>
+    <div class="hs300-volume" id="hs300-volume"></div>
   </div>
 
   <!-- 中列：信号统计 -->
@@ -546,6 +548,30 @@ function render(data) {
     badge.textContent = '大盘正常';
   }
   document.getElementById('hs300-reason').textContent = hs300.panic_reason || '';
+
+  // 成交量萎缩信息
+  const vol = hs300.volume;
+  const volAvg = hs300.volume_20d_avg;
+  const shrink = hs300.volume_shrink;
+  const shrinkReason = hs300.volume_shrink_reason || '';
+  let volHtml = '';
+  if (vol !== null && vol !== undefined) {
+    volHtml += '当日成交额：' + vol.toFixed(0) + ' 亿';
+  }
+  if (volAvg !== null && volAvg !== undefined) {
+    volHtml += '，近20日均值：' + volAvg.toFixed(0) + ' 亿';
+  }
+  if (shrink !== null && shrink !== undefined) {
+    if (shrink) {
+      volHtml += '，<span style="color:#00c853;font-weight:700;">成交量萎缩 ✅</span>';
+    } else {
+      volHtml += '，<span style="color:#ff1744;font-weight:700;">成交量未萎缩 ❌</span>';
+    }
+  }
+  if (shrinkReason) {
+    volHtml += '<br><span style="font-size:12px;color:#8b949e;">' + shrinkReason + '</span>';
+  }
+  document.getElementById('hs300-volume').innerHTML = volHtml;
 
   // 2. 摘要统计（嵌入大盘卡片中列）
   const summary = data.summary || {};

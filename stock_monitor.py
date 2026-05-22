@@ -87,14 +87,17 @@ def get_realtime_data():
 def get_hs300_data():
     """
     获取沪深300指数实时行情 + 历史数据（用于判断成交量和跌幅）
-    返回：dict，包含 hs300_change_pct, hs300_volume, hs300_volume_5d_avg
+    返回：dict，包含 hs300_change_pct, hs300_price, hs300_volume(亿元),
+                   hs300_volume_20d_avg(亿元), volume_shrink, panic_signal, panic_reason
     """
     print("📡 正在获取沪深300指数数据...")
     result = {
         "hs300_change_pct": None,
         "hs300_price": None,
-        "hs300_volume": None,
-        "hs300_volume_prev": None,
+        "hs300_volume": None,         # 当日成交额（亿元）
+        "hs300_volume_20d_avg": None,  # 近20日平均成交额（亿元）
+        "volume_shrink": False,        # 成交量是否萎缩
+        "volume_shrink_reason": "",    # 萎缩原因说明
         "panic_signal": False,
         "panic_reason": "",
     }
@@ -107,48 +110,79 @@ def get_hs300_data():
             row = hs300_row.iloc[0]
             result["hs300_change_pct"] = safe_float(row.get("涨跌幅"))
             result["hs300_price"] = safe_float(row.get("最新价"))
-            # 成交额（手）→ 成交量
-            result["hs300_volume"] = safe_float(row.get("成交额"))
-            print(f"   ✅ 沪深300 最新价={result['hs300_price']}, 涨跌幅={result['hs300_change_pct']}%")
+            # 成交额（元）→ 亿元
+            vol_raw = safe_float(row.get("成交额"))
+            result["hs300_volume"] = round(vol_raw / 100000000, 2) if vol_raw else None
+            print(f"   ✅ 沪深300 最新价={result['hs300_price']}, 涨跌幅={result['hs300_change_pct']}%, 成交额={result['hs300_volume']}亿")
 
-        # 获取近5日沪深300历史数据，计算成交量均线
+        # 获取近30日沪深300历史数据，计算成交量均线 + 萎缩判断
         try:
             today = datetime.date.today()
-            start_date = (today - datetime.timedelta(days=14)).strftime("%Y%m%d")
+            start_date = (today - datetime.timedelta(days=35)).strftime("%Y%m%d")
             end_date = today.strftime("%Y%m%d")
             df_hist = ak.stock_zh_index_daily_em(symbol="000300", start_date=start_date, end_date=end_date)
             if not df_hist.empty:
-                # 取最近5个交易日（排除今天可能的不完整数据）
-                recent = df_hist.tail(6).head(5)  # 最近5天（不含今天）
-                if len(recent) > 0:
-                    vol_col = "成交量" if "成交量" in recent.columns else recent.columns[-2]
-                    vol_avg = recent[vol_col].astype(float).mean()
-                    result["hs300_volume_5d_avg"] = vol_avg
-                    print(f"   ✅ 沪深300 近5日平均成交量={vol_avg:.0f}")
+                # 统一列名（不同版本 akshare 列名可能不同）
+                col_map = {}
+                for c in df_hist.columns:
+                    cl = c.strip().lower()
+                    if '日期' in cl or 'date' in cl:
+                        col_map['date'] = c
+                    if '成交' in cl or 'volume' in cl or 'vol' in cl:
+                        col_map['volume'] = c
+                    if '涨跌' in cl or 'change' in cl or '涨跌幅' in cl:
+                        col_map['change'] = c
+                date_col = col_map.get('date', df_hist.columns[0])
+                vol_col = col_map.get('volume', df_hist.columns[-2])
+                chg_col = col_map.get('change', df_hist.columns[2] if len(df_hist.columns) > 2 else df_hist.columns[-1])
+
+                df_hist[date_col] = pd.to_datetime(df_hist[date_col]).dt.strftime("%Y%m%d")
+                df_hist = df_hist.sort_values(date_col).reset_index(drop=True)
+
+                # 成交额转亿元
+                df_hist['_vol_yi'] = df_hist[vol_col].astype(float) / 100000000
+
+                # 最新一日数据
+                latest_row = df_hist.iloc[-1]
+                latest_volume_yi = float(latest_row['_vol_yi'])  # 亿元
+                latest_change = safe_float(latest_row.get(chg_col))
+
+                # 近20日均值（不含今天）
+                hist_20 = df_hist.iloc[-21:-1]
+                if len(hist_20) >= 5:
+                    avg_20 = hist_20['_vol_yi'].astype(float).mean()
+                    result["hs300_volume_20d_avg"] = round(avg_20, 2)
+
+                    # 萎缩判断（用户策略：低于20日均值50% 且 低于2000亿）
+                    shrink1 = latest_volume_yi < avg_20 * 0.5   # 低于20日均值50%
+                    shrink2 = latest_volume_yi < 2000      # 低于2000亿
+                    result["volume_shrink"] = shrink1 and shrink2
+                    if shrink1:
+                        result["volume_shrink_reason"] = f"成交额 {latest_volume_yi:.0f}亿 < 近20日均值({avg_20:.0f}亿)的50%"
+                    if shrink2:
+                        if result["volume_shrink_reason"]:
+                            result["volume_shrink_reason"] += "，且"
+                        result["volume_shrink_reason"] += f"成交额 {latest_volume_yi:.0f}亿 < 2000亿"
+                    if not result["volume_shrink"]:
+                        result["volume_shrink_reason"] = f"成交额 {latest_volume_yi:.0f}亿，近20日均值 {avg_20:.0f}亿，未明显萎缩"
+
+                    print(f"   ✅ 沪深300 最新成交额={latest_volume_yi:.0f}亿, 近20日均值={avg_20:.0f}亿, 萎缩={result['volume_shrink']}")
+
+                # 恐慌信号：跌幅>2.5% 且成交量萎缩
+                if result["hs300_change_pct"] is not None:
+                    change = result["hs300_change_pct"]
+                    condition1 = change < -2.5
+                    result["panic_signal"] = condition1  # 主要看跌幅，成交量作为辅助
+                    if condition1:
+                        reason = f"沪深300单日跌幅 {change:.2f}%（超过2.5%警戒线）"
+                        if result["volume_shrink"]:
+                            reason += "，且成交量萎缩"
+                        result["panic_reason"] = reason
+                    else:
+                        result["panic_reason"] = f"沪深300涨跌幅 {change:.2f}%，未达恐慌线（-2.5%）"
+
         except Exception as e:
             print(f"   ⚠️  获取沪深300历史数据失败（不影响主功能）: {e}")
-
-        # 判断恐慌信号：单日跌幅 > 2.5% 且成交量萎缩
-        if result["hs300_change_pct"] is not None:
-            change = result["hs300_change_pct"]
-            volume = result.get("hs300_volume", None)
-            vol_avg = result.get("hs300_volume_5d_avg", None)
-
-            # 条件1：跌幅 > 2.5%
-            condition1 = change < -2.5
-
-            # 条件2：成交量萎缩（今日成交量 < 近5日平均的90%）
-            condition2 = False
-            if volume is not None and vol_avg is not None:
-                condition2 = (volume < vol_avg * 0.9)
-
-            result["panic_signal"] = condition1  # 主要看跌幅，成交量作为辅助
-            if condition1:
-                result["panic_reason"] = f"沪深300单日跌幅 {change:.2f}%（超过2.5%警戒线）"
-                if condition2:
-                    result["panic_reason"] += "，且成交量萎缩"
-            else:
-                result["panic_reason"] = f"沪深300涨跌幅 {change:.2f}%，未达恐慌线（-2.5%）"
 
         return result
     except Exception as e:
@@ -392,6 +426,10 @@ def generate_output_json(stock_data, hs300_data):
         "hs300": {
             "price": hs300_data.get("hs300_price"),
             "change_pct": hs300_data.get("hs300_change_pct"),
+            "volume": hs300_data.get("hs300_volume"),
+            "volume_20d_avg": hs300_data.get("hs300_volume_20d_avg"),
+            "volume_shrink": hs300_data.get("volume_shrink", False),
+            "volume_shrink_reason": hs300_data.get("volume_shrink_reason", ""),
             "panic_signal": hs300_data.get("panic_signal", False),
             "panic_reason": hs300_data.get("panic_reason", ""),
         },
@@ -408,8 +446,8 @@ def generate_output_json(stock_data, hs300_data):
 
 def main():
     print("=" * 60)
-    print("  A股巨无霸高股息监测系统 - 数据抓取")
-    print("  数据源：akshare（东方财富）")
+    print("  A股15只赚钱天团股票监测 - 数据抓取")
+    print("   数据源：akshare（东方财富）")
     print("=" * 60)
 
     # 1. 获取沪深300大盘数据
@@ -438,6 +476,9 @@ def main():
     print("=" * 60)
     hs300 = output["hs300"]
     print(f"  沪深300：{hs300['price']} 点，涨跌幅 {hs300['change_pct']}%")
+    print(f"  当日成交额：{hs300['volume']} 亿")
+    print(f"  近20日均值：{hs300['volume_20d_avg']} 亿")
+    print(f"  成交量萎缩：{'🔥 是！' if hs300['volume_shrink'] else '❌ 否'}")
     print(f"  恐慌信号：{'🔥 是！黄金买点' if hs300['panic_signal'] else '否'}")
     if hs300['panic_reason']:
         print(f"  说明：{hs300['panic_reason']}")

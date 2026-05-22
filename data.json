@@ -4,6 +4,10 @@
   "hs300": {
     "price": 3872.34,
     "change_pct": -0.85,
+    "volume": 2850.0,
+    "volume_20d_avg": 3200.0,
+    "volume_shrink": false,
+    "volume_shrink_reason": "成交额 2850亿，近20日均值 3200亿，未明显萎缩",
     "panic_signal": false,
     "panic_reason": "沪深300涨跌幅 -0.85%，未达恐慌线（-2.5%）"
   },
