@@ -429,7 +429,7 @@ def main():
     
     # 输出 data.json（确保 JSON 可序列化）
     output = {
-        "update_time": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+        "update_time": datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S (北京时间)"),
         "data_date": datetime.date.today().strftime("%Y-%m-%d"),
         "hs300": convert_to_json_serializable(hs300_data),
         "categories": convert_to_json_serializable(categories),
