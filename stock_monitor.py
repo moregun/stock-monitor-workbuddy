@@ -75,7 +75,7 @@ DIVIDEND_TARGET = {
 # 工具函数
 # ============================================================
 def safe_float(val, default=None):
-    """安全转换为 float（处理 numpy/pandas 类型）"""
+    """安全转换为 float（处理 numpy/pandas 类型，过滤 NaN/Infinity）"""
     try:
         if val is None:
             return default
@@ -84,7 +84,11 @@ def safe_float(val, default=None):
             val = float(val)
         if isinstance(val, (np.bool_, bool)):
             return default
-        return float(val)
+        result = float(val)
+        # 过滤 NaN / Infinity（Python float 的 NaN 写进 JSON 是非法的）
+        if np.isnan(result) or np.isinf(result):
+            return default
+        return result
     except (ValueError, TypeError, OverflowError):
         return default
 
@@ -103,7 +107,10 @@ def safe_bool(val, default=False):
 
 
 def convert_to_json_serializable(obj):
-    """递归转换对象为 JSON 可序列化类型"""
+    """递归转换对象为 JSON 可序列化类型（过滤 NaN/Infinity）"""
+    # 先处理 Python float 的 NaN / Infinity
+    if isinstance(obj, float) and (np.isnan(obj) or np.isinf(obj)):
+        return None
     if isinstance(obj, dict):
         return {k: convert_to_json_serializable(v) for k, v in obj.items()}
     elif isinstance(obj, (list, tuple)):
@@ -111,7 +118,10 @@ def convert_to_json_serializable(obj):
     elif isinstance(obj, np.integer):
         return int(obj)
     elif isinstance(obj, np.floating):
-        return float(obj)
+        val = float(obj)
+        if np.isnan(val) or np.isinf(val):
+            return None
+        return val
     elif isinstance(obj, np.bool_):
         return bool(obj)
     elif isinstance(obj, pd.Timestamp):
@@ -202,25 +212,29 @@ def get_hs300_data():
             # 计算20日平均成交量
             hist['volume_ma20'] = hist['Volume'].rolling(window=20).mean()
             latest = hist.iloc[-1]
-            latest_volume = latest['Volume'] / 100000000  # 转换为亿
-            avg_20 = latest['volume_ma20'] / 100000000
-            
-            result["volume"] = round(latest_volume, 2)
-            result["volume_20d_avg"] = round(avg_20, 2)
-            
-            # 成交量萎缩判断
-            shrink1 = latest_volume < avg_20 * 0.5
-            shrink2 = latest_volume < 2000
-            result["volume_shrink"] = shrink1 and shrink2
-            
-            if shrink1:
-                result["volume_shrink_reason"] = f"成交额 {latest_volume:.0f}亿 < 近20日均值({avg_20:.0f}亿)的50%"
-            if shrink2:
-                if result["volume_shrink_reason"]:
-                    result["volume_shrink_reason"] += "，且"
-                result["volume_shrink_reason"] += f"成交额 {latest_volume:.0f}亿 < 2000亿"
-            if not result["volume_shrink"]:
-                result["volume_shrink_reason"] = f"成交额 {latest_volume:.0f}亿，近20日均值 {avg_20:.0f}亿，未明显萎缩"
+            latest_volume = safe_float(latest['Volume'] / 100000000)   # 转换为亿，过滤 NaN
+            avg_20 = safe_float(latest['volume_ma20'] / 100000000)
+
+            result["volume"] = round(latest_volume, 2) if latest_volume is not None else None
+            result["volume_20d_avg"] = round(avg_20, 2) if avg_20 is not None else None
+
+            # 成交量萎缩判断（需两个值均有效）
+            if latest_volume is not None and avg_20 is not None:
+                shrink1 = latest_volume < avg_20 * 0.5
+                shrink2 = latest_volume < 2000
+                result["volume_shrink"] = shrink1 and shrink2
+
+                if shrink1:
+                    result["volume_shrink_reason"] = f"成交额 {latest_volume:.0f}亿 < 近20日均值({avg_20:.0f}亿)的50%"
+                if shrink2:
+                    if result["volume_shrink_reason"]:
+                        result["volume_shrink_reason"] += "，且"
+                    result["volume_shrink_reason"] += f"成交额 {latest_volume:.0f}亿 < 2000亿"
+                if not result["volume_shrink"]:
+                    result["volume_shrink_reason"] = f"成交额 {latest_volume:.0f}亿，近20日均值 {avg_20:.0f}亿，未明显萎缩"
+            else:
+                result["volume_shrink"] = False
+                result["volume_shrink_reason"] = "成交量数据不足，无法计算"
             
             logger.info(f"   ✅ 沪深300 成交量萎缩={result['volume_shrink']}")
             
@@ -437,7 +451,7 @@ def main():
     }
     
     with open("data.json", "w", encoding="utf-8") as f:
-        json.dump(output, f, ensure_ascii=False, indent=2)
+        json.dump(output, f, ensure_ascii=False, indent=2, allow_nan=False)
     
     logger.info("=" * 50)
     logger.info(f"✅ 数据已保存到 data.json")
