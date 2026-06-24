@@ -21,15 +21,58 @@ jobs:
     runs-on: ubuntu-latest
     # 仅在默认分支运行，避免 PR 触发时重复运行
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-    # 提前适配 Node.js 24（避免 2026-06-02 后失效）
     env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+      TZ: Asia/Shanghai   # 强制使用北京时间，影响 date 命令和日志时间戳
     steps:
       - name: 📥 检出仓库代码
         uses: actions/checkout@v4
         with:
           # 保留 commit 历史，方便追溯数据变化
           fetch-depth: 0
+
+      - name: 🔍 检查是否迟到
+        run: |
+          hour=$(TZ=Asia/Shanghai date +%H)
+          min=$(TZ=Asia/Shanghai date +%M)
+          now_min=$((hour * 60 + min))
+
+          # 预定时间（分钟）
+          target1=$((10 * 60))  # 10:00
+          target2=$((14 * 60))  # 14:00
+
+          # 判断是否迟到（比预定时间晚30分钟以上）
+          late=0
+          slot=""
+          if [ $now_min -gt $((target1 + 30)) ] && [ $now_min -lt $((target2 - 30)) ]; then
+            late=1
+            slot="上午档(10:00)"
+          elif [ $now_min -gt $((target2 + 30)) ]; then
+            late=1
+            slot="下午档(14:00)"
+          fi
+
+          if [ "$late" -eq 1 ]; then
+            echo "LATE=true" >> $GITHUB_ENV
+            echo "LATE_SLOT=$slot" >> $GITHUB_ENV
+            echo "⚠️ 检测到迟到: $slot, 当前时间: $hour:$min"
+          else
+            echo "LATE=false" >> $GITHUB_ENV
+            echo "✅ 运行时间正常: $hour:$min"
+          fi
+
+      - name: 📢 发送迟到通知到飞书
+        if: env.LATE == 'true'
+        run: |
+          curl -X POST "$FEISHU_WEBHOOK" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"msg_type\": \"text\",
+              \"content\": {
+                \"text\": \"⚠️ 股票监测系统迟到警告\n\n预定时间: ${{ env.LATE_SLOT }}\n实际运行: $(TZ=Asia/Shanghai date +'%H:%M')\n请检查 GitHub Actions 队列状态。\"
+              }
+            }"
+        env:
+          FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}
 
       - name: 🐍 设置 Python 环境
         uses: actions/setup-python@v5
@@ -49,6 +92,7 @@ jobs:
           NO_PROXY: '*'
 
       - name: 💾 提交并更新 data.json
+        id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
@@ -56,10 +100,40 @@ jobs:
           # 仅当有变化时才提交（避免无意义的历史记录）
           if git diff --staged --quiet; then
             echo "📊 数据无变化，跳过提交"
+            echo "changed=false" >> $GITHUB_OUTPUT
           else
-            git commit -m "📊 自动更新股票监测数据 $(date +'%Y-%m-%d %H:%M')"
+            git commit -m "📊 自动更新股票监测数据 $(TZ=Asia/Shanghai date +'%Y-%m-%d %H:%M')"
             git push
             echo "✅ data.json 已自动提交并推送"
+            echo "changed=true" >> $GITHUB_OUTPUT
           fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 📢 发送成功通知到飞书
+        if: success()
+        run: |
+          curl -X POST "$FEISHU_WEBHOOK" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"msg_type\": \"text\",
+              \"content\": {
+                \"text\": \"✅ 股票监测系统更新成功\n\n时间: $(TZ=Asia/Shanghai date +'%Y-%m-%d %H:%M')\n数据已更新。\"
+              }
+            }"
+        env:
+          FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}
+
+      - name: 📢 发送失败通知到飞书
+        if: failure()
+        run: |
+          curl -X POST "$FEISHU_WEBHOOK" \
+            -H "Content-Type: application/json" \
+            -d "{
+              \"msg_type\": \"text\",
+              \"content\": {
+                \"text\": \"❌ 股票监测系统更新失败\n\n时间: $(TZ=Asia/Shanghai date +'%Y-%m-%d %H:%M')\n请检查 GitHub Actions 日志。\"
+              }
+            }"
+        env:
+          FEISHU_WEBHOOK: ${{ secrets.FEISHU_WEBHOOK }}
