@@ -523,22 +523,30 @@ def calculate_buy_signals(stock_data, hs300_data):
         else:
             reasons.append(f"⚠️ PEV≈{pev:.2f} > 1.0（高估区间，性价比下降）")
 
-    # ========== 高端制造成长：核心看 PEG + 行业周期位置，辅以现金流 ==========
+    # ========== 高端制造成长：核心看 PEG + 行业周期位置，辅以现金流 — 硬门槛：PE≤20 才进入高分区间 ==========
     elif category == "高端制造成长":
         if name == "宁德时代":
             # 前瞻PE + PEG
             peg = stock_data.get("peg")  # 从 yfinance 获取，可能为 None
-            if pe is not None:
-                if pe <= 20 and (peg is None or peg <= 0.8):
-                    peg_str = f" 且 PEG={peg:.2f} ≤ 0.8" if peg else ""
-                    reasons.append(f"💎 前瞻PE={pe:.2f} ≤ 20{peg_str}（极佳买点，周期+估值底部）")
-                    score += 50
-                elif pe <= 25 and (peg is None or peg <= 1.0):
-                    reasons.append(f"✅ 前瞻PE={pe:.2f}（20~25，合理买点）")
-                    score += 30
-                elif pe > 30 or (peg is not None and peg > 1.2):
-                    reasons.append(f"⚠️ 前瞻PE={pe:.2f} > 30 或 PEG={peg:.2f} > 1.2（增速预期透支）")
-                    score = max(0, score - 20)
+            if pe is None:
+                reasons.append("⚠️ PE数据缺失，无法判断")
+            elif pe <= 20 and (peg is None or peg <= 0.8):
+                peg_str = f" 且 PEG={peg:.2f} ≤ 0.8" if peg else ""
+                reasons.append(f"💎 前瞻PE={pe:.2f} ≤ 20{peg_str}（极佳买点，周期+估值底部）")
+                score += 50
+            elif pe <= 25 and (peg is None or peg <= 1.0):
+                reasons.append(f"📊 前瞻PE={pe:.2f}（20~25估值中枢区间，非最佳买点）")
+                score += 10
+                if peg is not None and peg <= 1.0:
+                    reasons.append(f"✅ PEG={peg:.2f} ≤ 1.0（成长与估值匹配）")
+                    score += 10
+            elif pe > 30 or (peg is not None and peg > 1.2):
+                reasons.append(f"⚠️ 前瞻PE={pe:.2f} > 30 或 PEG={peg:.2f} > 1.2（增速预期透支）")
+                score = max(0, score - 20)
+            else:
+                # pe 在 25~30 区间
+                reasons.append(f"📊 前瞻PE={pe:.2f}（25~30区间，偏贵）")
+                score += 5
             # 辅助：市占率提示
             reasons.append("📡 辅助判断：全球市占率>35%、储能增速>30%为加分项")
 
@@ -632,6 +640,7 @@ def build_stock_data(hs300_data, oil_data=None):
             "forward_dividend": forward_dividend,  # 当年每股分红
             "pe": stock_info.get("pe"),
             "pb": stock_info.get("pb"),
+            "peg": stock_info.get("peg"),  # PEG（高端制造成长股使用）
             "pev": stock_info.get("pb"),  # 保险股的PEV用PB近似
             "dividend_yield": stock_info.get("forward_dividend_yield"),  # 只显示前瞻股息率
             "dividend_yield_target": DIVIDEND_TARGET.get(code, 0),

@@ -498,9 +498,10 @@ function renderCategory(title, stocks) {
   const countMap = {'银行': '9', '能源通信': '3', '保险': '2', '成长股': '1'};
   const count = countMap[title] || stocks.length;
 
-  // 保险板块增加PEV列，强周期能源板块增加油价列
+  // 保险板块增加PEV列，强周期能源板块增加油价列，高端制造成长板块用PEG替换PB
   const showPEV = title === '保险';
   const showOilPrice = title === '强周期能源';
+  const showPEG = title === '高端制造成长';
 
   // 表头
   let rows = '';
@@ -522,8 +523,15 @@ function renderCategory(title, stocks) {
       '<td>' + price + ' <span class="' + chgCls + '">' + (s.change_pct > 0 ? '+' : '') + chg + '</span></td>' +
       '<td>' + (s.forward_dividend !== null && s.forward_dividend !== undefined ? s.forward_dividend.toFixed(3) : '--') + ' 元</td>' +
       '<td>' + yieldVal + '%</td>' +
-      '<td>' + pe + '</td>' +
-      '<td class="' + (pbCls === 'good' ? 'metric-value good' : pbCls === 'warn' ? 'metric-value warn' : '') + '">' + pb + '</td>';
+      '<td>' + pe + '</td>';
+    if (showPEG) {
+      // 高端制造成长：用 PEG 替换 PB
+      const pegVal = s.peg !== null && s.peg !== undefined ? s.peg.toFixed(2) : '--';
+      const pegCls = (s.peg !== null && s.peg <= 0.8) ? 'metric-value good' : (s.peg !== null && s.peg <= 1.0) ? 'metric-value warn' : '';
+      row += '<td class="' + pegCls + '">' + pegVal + '</td>';
+    } else {
+      row += '<td class="' + (pbCls === 'good' ? 'metric-value good' : pbCls === 'warn' ? 'metric-value warn' : '') + '">' + pb + '</td>';
+    }
     if (showOilPrice) {
       const oilPrice = s.oil_price !== null && s.oil_price !== undefined ? s.oil_price.toFixed(2) : '--';
       const oilChg = s.oil_change_pct !== null && s.oil_change_pct !== undefined ? s.oil_change_pct.toFixed(2) : '';
@@ -547,8 +555,12 @@ function renderCategory(title, stocks) {
     '<th>现价</th>' +
     '<th>当年股息</th>' +
     '<th>股息率(%)</th>' +
-    '<th>PE（动态）</th>' +
-    '<th>PB（市净率）</th>';
+    '<th>PE（动态）</th>';
+  if (showPEG) {
+    thead += '<th>PEG</th>';
+  } else {
+    thead += '<th>PB（市净率）</th>';
+  }
   if (showOilPrice) {
     thead += '<th>国际油价(Brent)</th>';
   }
