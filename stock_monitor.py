@@ -500,15 +500,28 @@ def calculate_buy_signals(stock_data, hs300_data):
                 reasons.append(f"📊 PE={pe:.2f}（14~16区间，偏贵）")
                 score += 5
 
-    # ========== 保险：PB（PEV近似）+ 股息率 ==========
+    # ========== 保险：PEV（内含价值倍数）+ 股息率 — 硬门槛：PEV<0.7 才进入高分区间 ==========
     elif category == "保险":
         pev = stock_data.get("pev") or pb   # 保险用PEV，没有则用PB近似
-        if pev is not None and pev < 0.7:
-            reasons.append(f"✅ PEV≈{pev:.2f} < 0.7（低估）")
-            score += 40
-        if dividend and dividend > 3:
-            reasons.append(f"✅ 股息率={dividend:.2f}% > 3%")
-            score += 30
+        if pev is None:
+            reasons.append("⚠️ PEV数据缺失，无法判断")
+        elif pev < 0.7:
+            reasons.append(f"💎 PEV≈{pev:.2f} < 0.7（极佳买点，深度低估）")
+            score += 50
+            if dividend and dividend > 3.5:
+                reasons.append(f"✅ 股息率={dividend:.2f}% > 3.5%（高股息加持）")
+                score += 20
+            elif dividend and dividend > 3:
+                reasons.append(f"✅ 股息率={dividend:.2f}% > 3%（有防御属性）")
+                score += 10
+        elif pev < 1.0:
+            reasons.append(f"📊 PEV≈{pev:.2f}（0.7~1.0估值中枢区间，非最佳买点）")
+            score += 10
+            if dividend and dividend > 3:
+                reasons.append(f"✅ 股息率={dividend:.2f}% > 3%（有防御属性）")
+                score += 10
+        else:
+            reasons.append(f"⚠️ PEV≈{pev:.2f} > 1.0（高估区间，性价比下降）")
 
     # ========== 高端制造成长：核心看 PEG + 行业周期位置，辅以现金流 ==========
     elif category == "高端制造成长":
