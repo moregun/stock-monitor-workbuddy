@@ -432,9 +432,23 @@ function getCategoryStrategy(title, stocks) {
   }
 
   if (title === '强周期能源') {
+    // 获取实际油价（从全局数据或第一只股票）
+    let oilPriceText = '--';
+    let oilStatus = '';
+    if (CACHED_DATA && CACHED_DATA.oil_price && CACHED_DATA.oil_price.price) {
+      const op = CACHED_DATA.oil_price.price;
+      const oc = CACHED_DATA.oil_price.change_pct;
+      let ocStr = oc !== null ? (oc > 0 ? '+' : '') + oc.toFixed(2) + '%' : '';
+      oilPriceText = '$' + op.toFixed(2) + (ocStr ? ' (' + ocStr + ')' : '');
+      if (op >= 60 && op <= 80) oilStatus = '✅ 盈利舒适区';
+      else if (op < 50) oilStatus = '⚠️ 偏低，盈利承压';
+      else if (op > 85) oilStatus = '📈 高位，周期顶部风险';
+    }
     items.push({icon: '💎', text: '中国石油/中国海油：核心看PB，PB≤1.0极佳买点，PB＞1.4高估区间', cls: 'green-flag'});
     items.push({icon: '💰', text: '中国神华：核心看股息率，≥6.5%极佳买点，＜4.5%高估区间', cls: 'green-flag'});
-    items.push({icon: '📡', text: '辅助判断：国际油价60~80美元时盈利最稳，持续低于50美元需谨慎', cls: 'blue-flag'});
+    let oilHint = '📡 辅助判断：国际油价' + oilPriceText;
+    if (oilStatus) oilHint += ' — ' + oilStatus;
+    items.push({icon: '🛢️', text: oilHint, cls: oilStatus.includes('✅') ? 'green-flag' : oilStatus.includes('⚠️') || oilStatus.includes('📈') ? 'yellow-flag' : 'blue-flag'});
   }
 
   if (title === '准公用事业') {
@@ -484,8 +498,9 @@ function renderCategory(title, stocks) {
   const countMap = {'银行': '9', '能源通信': '3', '保险': '2', '成长股': '1'};
   const count = countMap[title] || stocks.length;
 
-  // 保险板块增加PEV列
+  // 保险板块增加PEV列，强周期能源板块增加油价列
   const showPEV = title === '保险';
+  const showOilPrice = title === '强周期能源';
 
   // 表头
   let rows = '';
@@ -509,6 +524,12 @@ function renderCategory(title, stocks) {
       '<td>' + yieldVal + '%</td>' +
       '<td>' + pe + '</td>' +
       '<td class="' + (pbCls === 'good' ? 'metric-value good' : pbCls === 'warn' ? 'metric-value warn' : '') + '">' + pb + '</td>';
+    if (showOilPrice) {
+      const oilPrice = s.oil_price !== null && s.oil_price !== undefined ? s.oil_price.toFixed(2) : '--';
+      const oilChg = s.oil_change_pct !== null && s.oil_change_pct !== undefined ? s.oil_change_pct.toFixed(2) : '';
+      const oilChgCls = s.oil_change_pct > 0 ? 'chg-up' : s.oil_change_pct < 0 ? 'chg-down' : 'chg-flat';
+      row += '<td>$' + oilPrice + (oilChg ? ' <span class="' + oilChgCls + '">' + (s.oil_change_pct > 0 ? '+' : '') + oilChg + '%</span>' : '') + '</td>';
+    }
     if (showPEV) {
       const pev = s.pev !== null && s.pev !== undefined ? s.pev.toFixed(2) : '--';
       const pevCls = (s.pev !== null && s.pev < 0.7) ? 'metric-value good' : '';
@@ -528,6 +549,9 @@ function renderCategory(title, stocks) {
     '<th>股息率(%)</th>' +
     '<th>PE（动态）</th>' +
     '<th>PB（市净率）</th>';
+  if (showOilPrice) {
+    thead += '<th>国际油价(Brent)</th>';
+  }
   if (showPEV) {
     thead += '<th>PEV</th>';
   }

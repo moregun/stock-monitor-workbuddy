@@ -193,6 +193,37 @@ def get_stock_data(ticker, name, forward_dividend=None):
         return None
 
 
+def get_oil_price():
+    """
+    获取国际原油价格（Brent 布伦特原油期货）
+    返回：dict with price, change_pct
+    """
+    logger.info("📡 正在获取国际原油价格（Brent）...")
+    result = {"price": None, "change_pct": None}
+    try:
+        # Brent Crude Oil (BZ=F) via yfinance
+        oil = yf.Ticker("BZ=F")
+        info = oil.info
+
+        price = safe_float(info.get("regularMarketPrice") or info.get("currentPrice"))
+        previous_close = safe_float(info.get("previousClose"))
+
+        if price and previous_close:
+            change_pct = round((price - previous_close) / previous_close * 100, 2)
+            result["price"] = price
+            result["change_pct"] = change_pct
+            logger.info(f"   ✅ Brent原油: 价格=${price:.2f}, 涨跌幅={change_pct}%")
+        elif price:
+            result["price"] = price
+            logger.info(f"   ✅ Brent原油: 价格=${price:.2f}（涨跌幅不可用）")
+        else:
+            logger.warning(f"   ⚠️ Brent原油价格获取失败")
+    except Exception as e:
+        logger.warning(f"   ⚠️ 国际油价获取失败（不影响主功能）: {e}")
+
+    return result
+
+
 def get_hs300_data():
     """
     获取沪深300指数数据（使用 yfinance）
@@ -541,34 +572,34 @@ def _build_result(signal, score, reasons):
     return {"signal": signal, "score": score, "reasons": reasons, "advice": advice}
 
 
-def build_stock_data(hs300_data):
+def build_stock_data(hs300_data, oil_data=None):
     """构建所有股票的数据"""
     stock_count = len(STOCK_MAP)
     logger.info(f"📊 开始获取{stock_count}只股票数据...")
     categories = {"银行": [], "强周期能源": [], "准公用事业": [], "消费白马": [], "保险": [], "高端制造成长": []}
     summary = {"total_stocks": stock_count, "green_count": 0, "yellow_count": 0, "red_count": 0}
-    
+
     for idx, (code, info) in enumerate(STOCK_MAP.items()):
         name = info["name"]
         category = info["category"]
         ticker = info["ticker"]
-        
+
         # 从 JSON 文件读取前瞻分红数据
         dividend_data = FORWARD_DIVIDEND_DATA.get(code, {})
         forward_dividend = dividend_data.get("total_dividend_per_share", 0)
-        
-        logger.info(f"   🔍 处理 {code} {name} ({idx+1}/15)...")
-        
+
+        logger.info(f"   🔍 处理 {code} {name} ({idx+1}/{stock_count})...")
+
         # 获取股票数据（传递预计分红）
         stock_info = get_stock_data(ticker, name, forward_dividend)
-        
+
         if stock_info is None:
             stock_info = {
                 "price": None, "change_pct": None, "pe": None, "pb": None,
                 "forward_dividend_yield": None, "market_cap": None,
                 "error": "数据获取失败"
             }
-        
+
         # 组装最终数据
         stock_data = {
             "code": code,
@@ -584,6 +615,11 @@ def build_stock_data(hs300_data):
             "dividend_yield_target": DIVIDEND_TARGET.get(code, 0),
             "market_cap": stock_info.get("market_cap"),
         }
+
+        # 强周期能源股票附加国际油价
+        if category == "强周期能源" and oil_data:
+            stock_data["oil_price"] = oil_data.get("price")
+            stock_data["oil_change_pct"] = oil_data.get("change_pct")
         
         # 计算买入信号
         signal_result = calculate_buy_signals(stock_data, hs300_data)
@@ -624,30 +660,36 @@ def build_stock_data(hs300_data):
 # ============================================================
 def main():
     logger.info("=" * 50)
-    logger.info("🚀 A股15只赚钱天团股票监测系统 开始运行")
+    logger.info("🚀 A股16只赚钱天团股票监测系统 开始运行")
     logger.info("=" * 50)
-    
+
+    # 获取国际原油价格（Brent）
+    oil_data = get_oil_price()
+
     # 获取沪深300数据
     hs300_data = get_hs300_data()
     logger.info(f"沪深300 结果: price={hs300_data['price']}, change_pct={hs300_data['change_pct']}%")
-    
+
     # 获取所有股票数据
-    categories, summary = build_stock_data(hs300_data)
-    
+    categories, summary = build_stock_data(hs300_data, oil_data)
+
     # 输出 data.json（确保 JSON 可序列化）
     output = {
         "update_time": datetime.datetime.now(datetime.timezone(datetime.timedelta(hours=8))).strftime("%Y-%m-%d %H:%M:%S (北京时间)"),
         "data_date": datetime.date.today().strftime("%Y-%m-%d"),
+        "oil_price": convert_to_json_serializable(oil_data),
         "hs300": convert_to_json_serializable(hs300_data),
         "categories": convert_to_json_serializable(categories),
         "summary": convert_to_json_serializable(summary),
     }
-    
+
     with open("data.json", "w", encoding="utf-8") as f:
         json.dump(output, f, ensure_ascii=False, indent=2, allow_nan=False)
-    
+
     logger.info("=" * 50)
     logger.info(f"✅ 数据已保存到 data.json")
+    if oil_data.get("price"):
+        logger.info(f"   Brent原油: ${oil_data['price']:.2f} ({oil_data.get('change_pct', 0):+.2f}%)")
     logger.info(f"   沪深300: {hs300_data['price']} ({hs300_data['change_pct']}%)")
     logger.info(f"   信号统计: 🟢{summary['green_count']} 🟡{summary['yellow_count']} 🔴{summary['red_count']}")
     logger.info("=" * 50)
