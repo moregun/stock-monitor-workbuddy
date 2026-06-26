@@ -474,22 +474,31 @@ def calculate_buy_signals(stock_data, hs300_data):
                 score += 20
 
         elif name == "美的集团":
-            if pe is not None:
-                if pe <= 11:
-                    reasons.append(f"💎 PE={pe:.2f} ≤ 11（极佳买点，近5年估值底部）")
-                    score += 50
-                elif pe <= 14:
-                    reasons.append(f"✅ PE={pe:.2f}（11~14，合理买点）")
+            # 核心估值指标：PE — 硬门槛：PE>11 不给绿色信号
+            if pe is None:
+                reasons.append("⚠️ PE数据缺失，无法判断")
+            elif pe <= 11:
+                reasons.append(f"💎 PE={pe:.2f} ≤ 11（极佳买点，近5年估值底部）")
+                score += 50
+                if dividend is not None and dividend >= 5.5:
+                    reasons.append(f"✅ 股息率={dividend:.2f}% ≥ 5.5%（极佳）")
                     score += 30
-                elif pe > 16:
-                    reasons.append(f"⚠️ PE={pe:.2f} > 16（家电天花板下增速难支撑）")
-                    score = max(0, score - 20)
-            if dividend is not None and dividend >= 5.5:
-                reasons.append(f"✅ 股息率={dividend:.2f}% ≥ 5.5%（极佳）")
-                score += 30
-            elif dividend is not None and dividend >= 4.5:
-                reasons.append(f"✅ 股息率={dividend:.2f}%（4.5%~5.5%，合理）")
-                score += 20
+                elif dividend is not None and dividend >= 4.5:
+                    reasons.append(f"✅ 股息率={dividend:.2f}%（4.5%~5.5%，合理）")
+                    score += 20
+            elif pe <= 14:
+                reasons.append(f"📊 PE={pe:.2f}（11~14估值中枢区间，非最佳买点）")
+                score += 10
+                if dividend is not None and dividend >= 4.5:
+                    reasons.append(f"✅ 股息率={dividend:.2f}%（有防御属性）")
+                    score += 10
+            elif pe > 16:
+                reasons.append(f"⚠️ PE={pe:.2f} > 16（家电天花板下增速难支撑）")
+                score = max(0, score - 20)
+            else:
+                # pe 在 14~16 区间
+                reasons.append(f"📊 PE={pe:.2f}（14~16区间，偏贵）")
+                score += 5
 
     # ========== 保险：PB（PEV近似）+ 股息率 ==========
     elif category == "保险":
