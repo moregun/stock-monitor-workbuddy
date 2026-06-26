@@ -263,5 +263,25 @@
     ],
     "total_dividend_per_share": 7.964,
     "forward_dividend_yield_base": 7.964
+  },
+  "601088": {
+    "name": "中国神华",
+    "total_dividend_per_share": 2.5
+  },
+  "600900": {
+    "name": "长江电力",
+    "total_dividend_per_share": 0.82
+  },
+  "600377": {
+    "name": "宁沪高速",
+    "total_dividend_per_share": 0.9
+  },
+  "600519": {
+    "name": "贵州茅台",
+    "total_dividend_per_share": 51.0
+  },
+  "000333": {
+    "name": "美的集团",
+    "total_dividend_per_share": 4.5
   }
 }
