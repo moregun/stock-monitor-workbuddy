@@ -169,6 +169,7 @@ def get_stock_data(ticker, name, forward_dividend=None):
         # 获取估值指标
         pe = safe_float(info.get("trailingPE") or info.get("forwardPE"))
         pb = safe_float(info.get("priceToBook"))
+        peg = safe_float(info.get("pegRatio"))  # 尝试获取 PEG
         market_cap = safe_float(info.get("marketCap"))
         
         # 计算前瞻股息率（基于预计分红）
@@ -176,13 +177,14 @@ def get_stock_data(ticker, name, forward_dividend=None):
         if forward_dividend and price:
             forward_dividend_yield = round((forward_dividend / price) * 100, 2)
         
-        logger.info(f"   ✅ {name} ({ticker}): 价格={price}, 涨跌幅={change_pct}%, PE={pe}, PB={pb}, 前瞻股息率={forward_dividend_yield}%")
+        logger.info(f"   ✅ {name} ({ticker}): 价格={price}, 涨跌幅={change_pct}%, PE={pe}, PB={pb}, PEG={peg}, 前瞻股息率={forward_dividend_yield}%")
         
         return {
             "price": price,
             "change_pct": change_pct,
             "pe": pe,
             "pb": pb,
+            "peg": peg,  # 添加 PEG 字段
             "forward_dividend_yield": forward_dividend_yield,
             "market_cap": round(market_cap / 100000000, 2) if market_cap else None,  # 转换为亿
         }
@@ -298,7 +300,7 @@ def calculate_buy_signals(stock_data, hs300_data):
             reasons.append(f"✅ PE={pe:.2f} < 5（低估）")
             score += 30
         if pb_ok:
-            reasons.append(f"✅ PB={pb:.2f} < 0.65（破净）")
+            reasons.append(f"✅ PB={pb:.3f} < 0.65（破净）")
             score += 30
         if dividend and dividend > 5:
             reasons.append(f"✅ 股息率={dividend:.2f}% > 5%（高股息）")
@@ -470,16 +472,18 @@ def calculate_buy_signals(stock_data, hs300_data):
     # ========== 高端制造成长：核心看 PEG + 行业周期位置，辅以现金流 ==========
     elif category == "高端制造成长":
         if name == "宁德时代":
-            # 前瞻PE + PEG（PEG需自行估算，这里用PE近似判断）
+            # 前瞻PE + PEG
+            peg = stock_data.get("peg")  # 从 yfinance 获取，可能为 None
             if pe is not None:
-                if pe <= 20:
-                    reasons.append(f"💎 前瞻PE={pe:.2f} ≤ 20（极佳买点，周期+估值底部）")
+                if pe <= 20 and (peg is None or peg <= 0.8):
+                    peg_str = f" 且 PEG={peg:.2f} ≤ 0.8" if peg else ""
+                    reasons.append(f"💎 前瞻PE={pe:.2f} ≤ 20{peg_str}（极佳买点，周期+估值底部）")
                     score += 50
-                elif pe <= 25:
+                elif pe <= 25 and (peg is None or peg <= 1.0):
                     reasons.append(f"✅ 前瞻PE={pe:.2f}（20~25，合理买点）")
                     score += 30
-                elif pe > 30:
-                    reasons.append(f"⚠️ 前瞻PE={pe:.2f} > 30（增速预期透支）")
+                elif pe > 30 or (peg is not None and peg > 1.2):
+                    reasons.append(f"⚠️ 前瞻PE={pe:.2f} > 30 或 PEG={peg:.2f} > 1.2（增速预期透支）")
                     score = max(0, score - 20)
             # 辅助：市占率提示
             reasons.append("📡 辅助判断：全球市占率>35%、储能增速>30%为加分项")
@@ -538,9 +542,10 @@ def _build_result(signal, score, reasons):
 
 def build_stock_data(hs300_data):
     """构建所有股票的数据"""
-    logger.info("📊 开始获取20只股票数据...")
+    stock_count = len(STOCK_MAP)
+    logger.info(f"📊 开始获取{stock_count}只股票数据...")
     categories = {"银行": [], "强周期能源": [], "准公用事业": [], "消费白马": [], "保险": [], "高端制造成长": []}
-    summary = {"total_stocks": 20, "green_count": 0, "yellow_count": 0, "red_count": 0}
+    summary = {"total_stocks": stock_count, "green_count": 0, "yellow_count": 0, "red_count": 0}
     
     for idx, (code, info) in enumerate(STOCK_MAP.items()):
         name = info["name"]
