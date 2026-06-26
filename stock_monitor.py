@@ -313,23 +313,24 @@ def calculate_buy_signals(stock_data, hs300_data):
     # ========== 强周期能源：核心看 PB（市净率）+ 股息率 + 周期位置 ==========
     elif category == "强周期能源":
         if name == "中国石油":
-            # 核心估值指标：PB
-            if pb is not None:
-                if pb <= 1.0:
-                    reasons.append(f"💎 PB={pb:.2f} ≤ 1.0（极佳买点，破净）")
-                    score += 50
-                elif pb <= 1.1:
-                    reasons.append(f"✅ PB={pb:.2f}（1.0~1.1，合理买点）")
-                    score += 30
-                elif pb > 1.4:
-                    reasons.append(f"⚠️ PB={pb:.2f} > 1.4（高估区间，性价比下降）")
-                else:
-                    reasons.append(f"📊 PB={pb:.2f}（估值中枢）")
+            # 核心估值指标：PB — 硬门槛：PB>1.0 不给绿色信号
+            if pb is None:
+                reasons.append("⚠️ PB数据缺失，无法判断")
+            elif pb <= 1.0:
+                reasons.append(f"💎 PB={pb:.2f} ≤ 1.0（极佳买点）")
+                score += 50
+                if dividend and dividend >= 5:
+                    reasons.append(f"✅ 股息率={dividend:.2f}% ≥ 5%（高股息加持）")
+                    score += 20
+            elif pb <= 1.4:
+                reasons.append(f"📊 PB={pb:.2f}（1.0~1.4估值中枢区间，非最佳买点）")
+                score += 10
+                if dividend and dividend >= 5:
+                    reasons.append(f"✅ 股息率={dividend:.2f}% ≥ 5%（有防御属性）")
                     score += 10
-            # 辅助：股息率
-            if dividend and dividend >= 5:
-                reasons.append(f"✅ 股息率={dividend:.2f}% ≥ 5%（防御属性拉满）")
-                score += 20
+            else:
+                reasons.append(f"⚠️ PB={pb:.2f} > 1.4（高估区间，性价比下降）")
+                score = 0
             # 油价提示（无法实时获取，仅提示）
             reasons.append("📡 辅助判断：国际油价在 60~80 美元时盈利最稳")
 
