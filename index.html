@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🏦 A股16只赚钱天团股票监测面板</title>
+  <title>🏦 A股17只赚钱天团股票监测面板</title>
   <style>
     /* ============================================================
        全局样式 — 深色主题，清爽无广告
@@ -294,7 +294,7 @@
 
 <!-- ========== 顶部栏 ========== -->
 <div class="header">
-  <h1>🏦 A股<span>16只赚钱天团</span>股票监测面板</h1>
+  <h1>🏦 A股<span>17只赚钱天团</span>股票监测面板</h1>
   <div class="header-meta">
     <span id="update-time">加载中...</span>
     <button class="refresh-btn" id="refresh-btn" onclick="loadData()">🔄 手动刷新</button>
@@ -444,7 +444,7 @@ function getCategoryStrategy(title, stocks) {
       else if (op < 50) oilStatus = '⚠️ 偏低，盈利承压';
       else if (op > 85) oilStatus = '📈 高位，周期顶部风险';
     }
-    items.push({icon: '💎', text: '中国石油/中国海油：核心看PB，PB≤1.0极佳买点，PB＞1.4高估区间', cls: 'green-flag'});
+    items.push({icon: '💎', text: '中国石油/中国石化：核心看PB，PB≤1.0极佳买点，PB＞1.3高估区间', cls: 'green-flag'});
     items.push({icon: '💰', text: '中国神华：核心看股息率，≥6.5%极佳买点，＜4.5%高估区间', cls: 'green-flag'});
     let oilHint = '📡 辅助判断：国际油价' + oilPriceText;
     if (oilStatus) oilHint += ' — ' + oilStatus;

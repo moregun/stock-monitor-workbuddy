@@ -208,6 +208,23 @@
     "total_dividend_per_share": 0.47,
     "forward_dividend_yield_base": 0.47
   },
+  "600028": {
+    "name": "中国石化",
+    "dividends": [
+      {
+        "报告时间": "2025中报",
+        "分红说明": "10派0.88元(含税)",
+        "每股分红": 0.088
+      },
+      {
+        "报告时间": "2025年报",
+        "分红说明": "10派1.12元(含税)",
+        "每股分红": 0.112
+      }
+    ],
+    "total_dividend_per_share": 0.20,
+    "forward_dividend_yield_base": 0.20
+  },
   "601318": {
     "name": "中国平安",
     "dividends": [

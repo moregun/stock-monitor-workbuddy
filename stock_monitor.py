@@ -3,7 +3,7 @@
 A股15只赚钱天团股票监测系统
 使用 yfinance 获取数据（境外服务器稳定）
 分红数据从 forward_dividend.json 读取
-股票列表：银行(6) + 强周期能源(2) + 准公用事业(3) + 消费白马(2) + 保险(2) + 高端制造成长(1) = 16只
+股票列表：银行(6) + 强周期能源(3) + 准公用事业(3) + 消费白马(2) + 保险(2) + 高端制造成长(1) = 17只
 """
 
 import json
@@ -54,9 +54,10 @@ STOCK_MAP = {
     "601939": {"name": "建设银行", "category": "银行", "ticker": "601939.SS"},
     "601988": {"name": "中国银行", "category": "银行", "ticker": "601988.SS"},
     "600036": {"name": "招商银行", "category": "银行", "ticker": "600036.SS"},
-    # 强周期能源（2只）
+    # 强周期能源（3只）
     "601857": {"name": "中国石油", "category": "强周期能源", "ticker": "601857.SS"},
     "601088": {"name": "中国神华", "category": "强周期能源", "ticker": "601088.SS"},
+    "600028": {"name": "中国石化", "category": "强周期能源", "ticker": "600028.SS"},
     # 准公用事业（3只）
     "600941": {"name": "中国移动", "category": "准公用事业", "ticker": "600941.SS"},
     "600900": {"name": "长江电力", "category": "准公用事业", "ticker": "600900.SS"},
@@ -75,8 +76,8 @@ STOCK_MAP = {
 DIVIDEND_TARGET = {
     # 银行（6只）
     "601328": 5.62, "601288": 4.61, "601398": 4.22, "601939": 4.05, "601988": 3.97, "600036": 2.85,
-    # 强周期能源（2只）
-    "601857": 4.83, "601088": 6.50,
+    # 强周期能源（3只）
+    "601857": 4.83, "601088": 6.50, "600028": 4.50,
     # 准公用事业
     "600941": 7.85, "600900": 4.50, "600377": 6.50,
     # 消费白马
@@ -366,6 +367,29 @@ def calculate_buy_signals(stock_data, hs300_data):
                 reasons.append(f"⚠️ PB={pb:.2f} > 1.4（高估区间，性价比下降）")
                 score = 0
             # 油价提示（无法实时获取，仅提示）
+            reasons.append("📡 辅助判断：国际油价在 60~80 美元时盈利最稳")
+
+        elif name == "中国石化":
+            # 核心估值指标：PB — 硬门槛：PB>1.0 不给绿色信号（与中国石油同类）
+            if pb is None:
+                reasons.append("⚠️ PB数据缺失，无法判断")
+            elif pb <= 1.0:
+                reasons.append(f"💎 PB={pb:.2f} ≤ 1.0（极佳买点，破净）")
+                score += 50
+                excellent_buy_point = True
+                if dividend and dividend >= 4:
+                    reasons.append(f"✅ 股息率={dividend:.2f}% ≥ 4%（高股息加持）")
+                    score += 20
+            elif pb <= 1.3:
+                reasons.append(f"📊 PB={pb:.2f}（1.0~1.3估值中枢区间，非最佳买点）")
+                score += 10
+                if dividend and dividend >= 4:
+                    reasons.append(f"✅ 股息率={dividend:.2f}% ≥ 4%（有防御属性）")
+                    score += 10
+            else:
+                reasons.append(f"⚠️ PB={pb:.2f} > 1.3（高估区间，性价比下降）")
+                score = 0
+            # 油价提示
             reasons.append("📡 辅助判断：国际油价在 60~80 美元时盈利最稳")
 
         elif name == "中国神华":
