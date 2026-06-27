@@ -318,6 +318,7 @@ def calculate_buy_signals(stock_data, hs300_data):
 
     reasons = []
     score = 0
+    excellent_buy_point = False  # 是否达到该类别"极佳买点"标准（硬门槛）
 
     # ========== 银行：PE + PB + 股息率（硬门槛：PE<5 或 PB<0.65） ==========
     if category == "银行":
@@ -327,6 +328,7 @@ def calculate_buy_signals(stock_data, hs300_data):
         if not pe_ok and not pb_ok:
             reasons.append("😴 估值未达安全区（需 PE<5 或 PB<0.65），建议观望")
             return _build_result("red", 0, reasons)
+        excellent_buy_point = True  # 银行通过硬门槛即视为极佳买点
         if pe_ok:
             reasons.append(f"✅ PE={pe:.2f} < 5（低估）")
             score += 30
@@ -350,6 +352,7 @@ def calculate_buy_signals(stock_data, hs300_data):
             elif pb <= 1.0:
                 reasons.append(f"💎 PB={pb:.2f} ≤ 1.0（极佳买点）")
                 score += 50
+                excellent_buy_point = True
                 if dividend and dividend >= 5:
                     reasons.append(f"✅ 股息率={dividend:.2f}% ≥ 5%（高股息加持）")
                     score += 20
@@ -372,6 +375,7 @@ def calculate_buy_signals(stock_data, hs300_data):
             elif dividend >= 6.5:
                 reasons.append(f"💎 股息率={dividend:.2f}% ≥ 6.5%（极佳买点）")
                 score += 50
+                excellent_buy_point = True
                 if pe is not None and pe <= 12:
                     reasons.append(f"✅ PE={pe:.2f} ≤ 12（估值底部加持）")
                     score += 20
@@ -412,6 +416,7 @@ def calculate_buy_signals(stock_data, hs300_data):
                 if dividend >= 5.5:
                     reasons.append(f"💎 股息率={dividend:.2f}% ≥ 5.5%（极佳买点）")
                     score += 50
+                    excellent_buy_point = True
                 elif dividend >= 4.5:
                     reasons.append(f"✅ 股息率={dividend:.2f}%（4.5%~5.5%，合理买点）")
                     score += 30
@@ -429,6 +434,7 @@ def calculate_buy_signals(stock_data, hs300_data):
                 if pe <= 16:
                     reasons.append(f"💎 PE={pe:.2f} ≤ 16（极佳买点，历史估值底部）")
                     score += 50
+                    excellent_buy_point = True
                 elif pe <= 19:
                     reasons.append(f"✅ PE={pe:.2f}（16~19，合理买点）")
                     score += 30
@@ -447,6 +453,7 @@ def calculate_buy_signals(stock_data, hs300_data):
                 if dividend >= 6.5:
                     reasons.append(f"💎 股息率={dividend:.2f}% ≥ 6.5%（极佳买点）")
                     score += 50
+                    excellent_buy_point = True
                 elif dividend >= 5.5:
                     reasons.append(f"✅ 股息率={dividend:.2f}%（5.5%~6.5%，合理买点）")
                     score += 30
@@ -467,6 +474,7 @@ def calculate_buy_signals(stock_data, hs300_data):
                 if pe <= 18:
                     reasons.append(f"💎 前瞻PE={pe:.2f} ≤ 18（极佳买点，近10年10%分位）")
                     score += 50
+                    excellent_buy_point = True
                 elif pe <= 22:
                     reasons.append(f"✅ 前瞻PE={pe:.2f}（18~22，合理买点）")
                     score += 30
@@ -484,6 +492,7 @@ def calculate_buy_signals(stock_data, hs300_data):
             elif pe <= 11:
                 reasons.append(f"💎 PE={pe:.2f} ≤ 11（极佳买点，近5年估值底部）")
                 score += 50
+                excellent_buy_point = True
                 if dividend is not None and dividend >= 5.5:
                     reasons.append(f"✅ 股息率={dividend:.2f}% ≥ 5.5%（极佳）")
                     score += 30
@@ -512,6 +521,7 @@ def calculate_buy_signals(stock_data, hs300_data):
         elif pev < 0.7:
             reasons.append(f"💎 PEV≈{pev:.2f} < 0.7（极佳买点，深度低估）")
             score += 50
+            excellent_buy_point = True
             if dividend and dividend > 3.5:
                 reasons.append(f"✅ 股息率={dividend:.2f}% > 3.5%（高股息加持）")
                 score += 20
@@ -538,6 +548,7 @@ def calculate_buy_signals(stock_data, hs300_data):
                 peg_str = f" 且 PEG={peg:.2f} ≤ 0.8" if peg else ""
                 reasons.append(f"💎 前瞻PE={pe:.2f} ≤ 20{peg_str}（极佳买点，周期+估值底部）")
                 score += 50
+                excellent_buy_point = True
             elif pe <= 25 and (peg is None or peg <= 1.0):
                 reasons.append(f"📊 前瞻PE={pe:.2f}（20~25估值中枢区间，非最佳买点）")
                 score += 10
@@ -554,25 +565,30 @@ def calculate_buy_signals(stock_data, hs300_data):
             # 辅助：市占率提示
             reasons.append("📡 辅助判断：全球市占率>35%、储能增速>30%为加分项")
 
-    # ========== 通用加分项 ==========
+    # ========== 通用加分项（降低权重，避免把"非最佳买点"推成绿色） ==========
     # 大盘恐慌信号
     if hs300_data.get("panic_signal"):
         reasons.append(f"🔥 大盘恐慌：{hs300_data['panic_reason']}")
-        score += 20
+        score += 10  # 从20降到10
     elif hs300_data.get("volume_shrink"):
         reasons.append(f"📉 成交量萎缩：{hs300_data['volume_shrink_reason']}")
-        score += 10
+        score += 5   # 从10降到5
 
     # 分红季（6-7月）
     now = datetime.datetime.now()
     if now.month in [6, 7]:
         reasons.append("🎁 临近分红季（6-7月），现在布局可吃分红")
-        score += 15
+        score += 10  # 从15降到10
 
     # 年末（12月）
     if now.month == 12:
         reasons.append("🎄 年末，机构做市值行情")
-        score += 10
+        score += 5   # 从10降到5
+
+    # ========== 硬性封顶：未达"极佳买点"标准的股票，最高只能到黄色区间(45分) ==========
+    if not excellent_buy_point and score > 45:
+        reasons.insert(-1, "⛔ 核心估值指标未达极佳买点标准，通用加分无法提升信号等级")
+        score = 45
 
     # ========== 确定信号等级 ==========
     if score >= 50:
