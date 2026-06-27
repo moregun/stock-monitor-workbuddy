@@ -1,5 +1,5 @@
 {
-  "update_time": "2026-06-27 09:26:14 (北京时间)",
+  "update_time": "2026-06-27 12:24:51 (北京时间)",
   "data_date": "2026-06-27",
   "oil_price": {
     "price": 73.57,
@@ -32,7 +32,7 @@
         "dividend_yield_target": 5.62,
         "market_cap": 5752.48,
         "signal": "green",
-        "score": 85,
+        "score": 70,
         "reasons": [
           "✅ PB=0.488 < 0.65（破净）",
           "🎁 股息率=4.99%，接近目标(5.62%)",
@@ -77,7 +77,7 @@
         "dividend_yield_target": 4.22,
         "market_cap": 25483.05,
         "signal": "green",
-        "score": 85,
+        "score": 70,
         "reasons": [
           "✅ PB=0.646 < 0.65（破净）",
           "🎁 股息率=4.34%，接近目标(4.22%)",
@@ -167,8 +167,8 @@
         "market_cap": 16343.77,
         "oil_price": 73.57,
         "oil_change_pct": -2.56,
-        "signal": "green",
-        "score": 55,
+        "signal": "yellow",
+        "score": 40,
         "reasons": [
           "📊 PB=1.01（1.0~1.4估值中枢区间，非最佳买点）",
           "✅ 股息率=5.26% ≥ 5%（有防御属性）",
@@ -176,7 +176,7 @@
           "🔥 大盘恐慌：沪深300单日跌幅 -3.03%（超过2.5%警戒线）",
           "🎁 临近分红季（6-7月），现在布局可吃分红"
         ],
-        "advice": "🟢 可买入"
+        "advice": "🟡 观望"
       },
       {
         "code": "601088",
@@ -184,24 +184,24 @@
         "category": "强周期能源",
         "price": 39.57,
         "change_pct": 0.43,
-        "forward_dividend": 2.5,
+        "forward_dividend": 2.01,
         "pe": 15.277992,
         "pb": 1.6431359,
         "peg": 14.94,
         "pev": 1.6431359,
-        "dividend_yield": 6.32,
+        "dividend_yield": 5.08,
         "dividend_yield_target": 6.5,
         "market_cap": 8582.51,
         "oil_price": 73.57,
         "oil_change_pct": -2.56,
-        "signal": "green",
-        "score": 65,
+        "signal": "red",
+        "score": 25,
         "reasons": [
-          "✅ 股息率=6.32%（5.5%~6.5%，合理买点）",
+          "📊 股息率=5.08%（4.5%~5.5%观察区）",
           "🔥 大盘恐慌：沪深300单日跌幅 -3.03%（超过2.5%警戒线）",
           "🎁 临近分红季（6-7月），现在布局可吃分红"
         ],
-        "advice": "🟢 可买入"
+        "advice": "🔴 不建议（等待更好买点）"
       }
     ],
     "准公用事业": [
@@ -219,14 +219,15 @@
         "dividend_yield": 5.42,
         "dividend_yield_target": 7.85,
         "market_cap": 18791.85,
-        "signal": "green",
-        "score": 65,
+        "signal": "yellow",
+        "score": 45,
         "reasons": [
           "✅ 股息率=5.42%（4.5%~5.5%，合理买点）",
           "🔥 大盘恐慌：沪深300单日跌幅 -3.03%（超过2.5%警戒线）",
+          "⛔ 核心估值指标未达极佳买点标准，通用加分无法提升信号等级",
           "🎁 临近分红季（6-7月），现在布局可吃分红"
         ],
-        "advice": "🟢 可买入"
+        "advice": "🟡 观望"
       },
       {
         "code": "600900",
@@ -234,22 +235,23 @@
         "category": "准公用事业",
         "price": 26.65,
         "change_pct": 1.64,
-        "forward_dividend": 0.82,
+        "forward_dividend": 1.0,
         "pe": 18.129251,
         "pb": 2.861284,
         "peg": null,
         "pev": 2.861284,
-        "dividend_yield": 3.08,
+        "dividend_yield": 3.75,
         "dividend_yield_target": 4.5,
         "market_cap": 6520.78,
-        "signal": "green",
-        "score": 65,
+        "signal": "yellow",
+        "score": 45,
         "reasons": [
           "✅ PE=18.13（16~19，合理买点）",
           "🔥 大盘恐慌：沪深300单日跌幅 -3.03%（超过2.5%警戒线）",
+          "⛔ 核心估值指标未达极佳买点标准，通用加分无法提升信号等级",
           "🎁 临近分红季（6-7月），现在布局可吃分红"
         ],
-        "advice": "🟢 可买入"
+        "advice": "🟡 观望"
       },
       {
         "code": "600377",
@@ -257,22 +259,22 @@
         "category": "准公用事业",
         "price": 11.75,
         "change_pct": -0.68,
-        "forward_dividend": 0.9,
+        "forward_dividend": 0.49,
         "pe": 12.5,
         "pb": 1.3658026,
         "peg": 3.81,
         "pev": 1.3658026,
-        "dividend_yield": 7.66,
+        "dividend_yield": 4.17,
         "dividend_yield_target": 6.5,
         "market_cap": 591.94,
-        "signal": "green",
-        "score": 85,
+        "signal": "red",
+        "score": 20,
         "reasons": [
-          "💎 股息率=7.66% ≥ 6.5%（极佳买点）",
+          "⚠️ 股息率=4.17% < 4.5%（高估区间）",
           "🔥 大盘恐慌：沪深300单日跌幅 -3.03%（超过2.5%警戒线）",
           "🎁 临近分红季（6-7月），现在布局可吃分红"
         ],
-        "advice": "🟢 可买入"
+        "advice": "🔴 不建议（等待更好买点）"
       }
     ],
     "消费白马": [
@@ -282,19 +284,19 @@
         "category": "消费白马",
         "price": 1168.63,
         "change_pct": -1.3,
-        "forward_dividend": 51.0,
+        "forward_dividend": 51.98123,
         "pe": 17.698471,
         "pb": 5.398103,
         "peg": 1.65,
         "pev": 5.398103,
-        "dividend_yield": 4.36,
+        "dividend_yield": 4.45,
         "dividend_yield_target": 4.0,
         "market_cap": 14608.83,
         "signal": "green",
-        "score": 105,
+        "score": 90,
         "reasons": [
           "💎 前瞻PE=17.70 ≤ 18（极佳买点，近10年10%分位）",
-          "✅ 股息率=4.36% ≥ 4%（加分）",
+          "✅ 股息率=4.45% ≥ 4%（加分）",
           "🔥 大盘恐慌：沪深300单日跌幅 -3.03%（超过2.5%警戒线）",
           "🎁 临近分红季（6-7月），现在布局可吃分红"
         ],
@@ -306,23 +308,23 @@
         "category": "消费白马",
         "price": 78.55,
         "change_pct": 2.68,
-        "forward_dividend": 4.5,
+        "forward_dividend": 4.3,
         "pe": 13.496564,
         "pb": 2.535916,
         "peg": 2.83,
         "pev": 2.535916,
-        "dividend_yield": 5.73,
+        "dividend_yield": 5.47,
         "dividend_yield_target": 5.5,
         "market_cap": 5980.36,
-        "signal": "green",
-        "score": 55,
+        "signal": "yellow",
+        "score": 40,
         "reasons": [
           "📊 PE=13.50（11~14估值中枢区间，非最佳买点）",
-          "✅ 股息率=5.73%（有防御属性）",
+          "✅ 股息率=5.47%（有防御属性）",
           "🔥 大盘恐慌：沪深300单日跌幅 -3.03%（超过2.5%警戒线）",
           "🎁 临近分红季（6-7月），现在布局可吃分红"
         ],
-        "advice": "🟢 可买入"
+        "advice": "🟡 观望"
       }
     ],
     "保险": [
@@ -340,15 +342,15 @@
         "dividend_yield": 5.72,
         "dividend_yield_target": 3.86,
         "market_cap": 8552.24,
-        "signal": "green",
-        "score": 55,
+        "signal": "yellow",
+        "score": 40,
         "reasons": [
           "📊 PEV≈0.84（0.7~1.0估值中枢区间，非最佳买点）",
           "✅ 股息率=5.72% > 3%（有防御属性）",
           "🔥 大盘恐慌：沪深300单日跌幅 -3.03%（超过2.5%警戒线）",
           "🎁 临近分红季（6-7月），现在布局可吃分红"
         ],
-        "advice": "🟢 可买入"
+        "advice": "🟡 观望"
       },
       {
         "code": "601628",
@@ -364,14 +366,14 @@
         "dividend_yield": 2.44,
         "dividend_yield_target": 3.02,
         "market_cap": 9903.95,
-        "signal": "yellow",
-        "score": 35,
+        "signal": "red",
+        "score": 20,
         "reasons": [
           "⚠️ PEV≈1.66 > 1.0（高估区间，性价比下降）",
           "🔥 大盘恐慌：沪深300单日跌幅 -3.03%（超过2.5%警戒线）",
           "🎁 临近分红季（6-7月），现在布局可吃分红"
         ],
-        "advice": "🟡 观望"
+        "advice": "🔴 不建议（等待更好买点）"
       }
     ],
     "高端制造成长": [
@@ -389,22 +391,22 @@
         "dividend_yield": 2.09,
         "dividend_yield_target": 0.41,
         "market_cap": 17627.45,
-        "signal": "yellow",
-        "score": 35,
+        "signal": "red",
+        "score": 20,
         "reasons": [
           "⚠️ 前瞻PE=21.73 > 30 或 PEG=1.51 > 1.2（增速预期透支）",
           "📡 辅助判断：全球市占率>35%、储能增速>30%为加分项",
           "🔥 大盘恐慌：沪深300单日跌幅 -3.03%（超过2.5%警戒线）",
           "🎁 临近分红季（6-7月），现在布局可吃分红"
         ],
-        "advice": "🟡 观望"
+        "advice": "🔴 不建议（等待更好买点）"
       }
     ]
   },
   "summary": {
     "total_stocks": 16,
-    "green_count": 10,
-    "yellow_count": 2,
-    "red_count": 4
+    "green_count": 3,
+    "yellow_count": 5,
+    "red_count": 8
   }
 }
