@@ -366,25 +366,29 @@ def calculate_buy_signals(stock_data, hs300_data):
             reasons.append("📡 辅助判断：国际油价在 60~80 美元时盈利最稳")
 
         elif name == "中国神华":
-            # 核心估值指标：股息率 + 静态PE
-            if dividend is not None:
-                if dividend >= 6.5:
-                    reasons.append(f"💎 股息率={dividend:.2f}% ≥ 6.5%（极佳买点）")
-                    score += 50
-                elif dividend >= 5.5:
-                    reasons.append(f"✅ 股息率={dividend:.2f}%（5.5%~6.5%，合理买点）")
-                    score += 30
-                elif dividend < 4.5:
-                    reasons.append(f"⚠️ 股息率={dividend:.2f}% < 4.5%（高估区间）")
-                else:
-                    reasons.append(f"📊 股息率={dividend:.2f}%（观察区）")
+            # 核心估值指标：股息率 — 硬门槛：股息率<6.5% 不给绿色信号
+            if dividend is None:
+                reasons.append("⚠️ 股息率数据缺失，无法判断")
+            elif dividend >= 6.5:
+                reasons.append(f"💎 股息率={dividend:.2f}% ≥ 6.5%（极佳买点）")
+                score += 50
+                if pe is not None and pe <= 12:
+                    reasons.append(f"✅ PE={pe:.2f} ≤ 12（估值底部加持）")
+                    score += 20
+                elif pe is not None and pe <= 16:
+                    reasons.append(f"✅ PE={pe:.2f} ≤ 16（估值合理）")
                     score += 10
-            if pe is not None:
-                if pe <= 12:
-                    reasons.append(f"✅ PE={pe:.2f} ≤ 12（估值底部）")
-                    score += 30
-                elif pe > 16:
-                    reasons.append(f"⚠️ PE={pe:.2f} > 16（溢价过高）")
+            elif dividend >= 5.5:
+                reasons.append(f"📊 股息率={dividend:.2f}%（5.5%~6.5%估值中枢区间，非最佳买点）")
+                score += 10
+                if pe is not None and pe <= 12:
+                    reasons.append(f"✅ PE={pe:.2f} ≤ 12（估值较低）")
+                    score += 10
+            elif dividend < 4.5:
+                reasons.append(f"⚠️ 股息率={dividend:.2f}% < 4.5%（高估区间）")
+            else:
+                reasons.append(f"📊 股息率={dividend:.2f}%（4.5%~5.5%观察区）")
+                score += 5
 
         elif name == "中国海油":
             # 参照中国石油逻辑（强周期能源）
