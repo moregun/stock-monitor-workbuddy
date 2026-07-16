@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>🏦 A股17只赚钱天团股票监测面板</title>
+  <title>🏦 A股优选分红股票监测面板</title>
   <style>
     /* ============================================================
        全局样式 — 深色主题，清爽无广告
@@ -294,7 +294,7 @@
 
 <!-- ========== 顶部栏 ========== -->
 <div class="header">
-  <h1>🏦 A股<span>17只赚钱天团</span>股票监测面板</h1>
+  <h1>🏦 A股<span>优选分红股票</span>监测面板</h1>
   <div class="header-meta">
     <span id="update-time">加载中...</span>
     <button class="refresh-btn" id="refresh-btn" onclick="loadData()">🔄 手动刷新</button>
@@ -446,20 +446,25 @@ function getCategoryStrategy(title, stocks) {
     }
     items.push({icon: '💎', text: '中国石油/中国石化：核心看PB，PB≤1.0极佳买点，PB＞1.3高估区间', cls: 'green-flag'});
     items.push({icon: '💰', text: '中国神华：核心看股息率，≥6.5%极佳买点，＜4.5%高估区间', cls: 'green-flag'});
+    items.push({icon: '💰', text: '陕西煤业：核心看股息率，≥6.0%极佳买点，＜4.0%高估区间', cls: 'green-flag'});
     let oilHint = '📡 辅助判断：国际油价' + oilPriceText;
     if (oilStatus) oilHint += ' — ' + oilStatus;
     items.push({icon: '🛢️', text: oilHint, cls: oilStatus.includes('✅') ? 'green-flag' : oilStatus.includes('⚠️') || oilStatus.includes('📈') ? 'yellow-flag' : 'blue-flag'});
   }
 
-  if (title === '准公用事业') {
+  if (title === '公用事业') {
     items.push({icon: '💰', text: '中国移动：股息率≥5.5%或PE≤12为极佳买点，类债券资产', cls: 'green-flag'});
     items.push({icon: '💎', text: '长江电力：PE≤16且股息率≥4.5%为极佳买点，永续现金流', cls: 'green-flag'});
     items.push({icon: '💰', text: '宁沪高速：股息率≥6.5%或PE≤10为极佳买点，长三角核心路产', cls: 'green-flag'});
+    items.push({icon: '💡', text: '申能股份：股息率≥4.5%或PE≤10为极佳买点，上海综合能源平台', cls: 'green-flag'});
   }
 
   if (title === '消费白马') {
     items.push({icon: '💎', text: '贵州茅台：前瞻PE≤18且股息率≥4%为极佳买点，品牌壁垒深厚', cls: 'green-flag'});
     items.push({icon: '💎', text: '美的集团：PE≤11且股息率≥5.5%为极佳买点，全球化+ToB双驱动', cls: 'green-flag'});
+    items.push({icon: '💎', text: '双汇发展：PE≤15且股息率≥5%为极佳买点，肉制品龙头', cls: 'green-flag'});
+    items.push({icon: '💎', text: '伊利股份：PE≤18且股息率≥4%为极佳买点，乳业龙头', cls: 'green-flag'});
+    items.push({icon: '💎', text: '格力电器：PE≤8且股息率≥5%为极佳买点，家电估值底部', cls: 'green-flag'});
     items.push({icon: '📅', text: '消费白马适合长期持有，估值底部布局后不宜频繁交易', cls: 'blue-flag'});
   }
 
@@ -481,8 +486,17 @@ function getCategoryStrategy(title, stocks) {
     items.push({icon: '📅', text: '年底建仓期（10-12月），高股息股布局好时机', cls: 'blue-flag'});
   }
 
+  if (title === '医药红利股') {
+    items.push({icon: '💊', text: '华润江中：股息率≥4.5%为极佳买点，高分红中药股', cls: 'green-flag'});
+    items.push({icon: '💊', text: '济川药业：股息率≥5.0%为极佳买点，超高分红标的', cls: 'green-flag'});
+    items.push({icon: '💊', text: '云南白药：股息率≥4.0%为极佳买点，品牌中药分红稳定', cls: 'green-flag'});
+    items.push({icon: '📅', text: '医药红利股适合长期持有，分红再投资复利效应显著', cls: 'blue-flag'});
+  }
+
   if (title === '高端制造成长') {
     items.push({icon: '🚀', text: '宁德时代：前瞻PE≤20且PEG≤0.8为极佳买点，成长与估值匹配', cls: 'yellow-flag'});
+    items.push({icon: '🏗️', text: '中国建筑：前瞻PE≤5且PEG≤0.8为极佳买点，低估值建筑龙头', cls: 'yellow-flag'});
+    items.push({icon: '🚌', text: '宇通客车：前瞻PE≤12且PEG≤0.8为极佳买点，客车龙头', cls: 'yellow-flag'});
     items.push({icon: '📡', text: '辅助判断：全球市占率＞35%、储能增速＞30%为加分项', cls: 'blue-flag'});
   }
 
@@ -495,8 +509,7 @@ function getCategoryStrategy(title, stocks) {
 
 /* ========== 渲染板块 ========== */
 function renderCategory(title, stocks) {
-  const countMap = {'银行': '9', '能源通信': '3', '保险': '2', '成长股': '1'};
-  const count = countMap[title] || stocks.length;
+  const count = stocks.length;
 
   // 保险板块增加PEV列，强周期能源板块增加油价列，高端制造成长板块用PEG替换PB
   const showPEV = title === '保险';
@@ -636,7 +649,7 @@ function render(data) {
   // 3. 板块
   const cats = data.categories || {};
   let contentHtml = '';
-  const catOrder = ['银行', '强周期能源', '准公用事业', '消费白马', '保险', '高端制造成长'];
+  const catOrder = ['银行', '强周期能源', '公用事业', '消费白马', '保险', '医药红利股', '高端制造成长'];
   for (const catName of catOrder) {
     if (cats[catName] && cats[catName].length > 0) {
       contentHtml += renderCategory(catName, cats[catName]);

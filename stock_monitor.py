@@ -1,9 +1,9 @@
 # -*- coding: utf-8 -*-
 """
-A股15只赚钱天团股票监测系统
+A股优选分红股票监测系统
 使用 yfinance 获取数据（境外服务器稳定）
 分红数据从 forward_dividend.json 读取
-股票列表：银行(6) + 强周期能源(3) + 准公用事业(3) + 消费白马(2) + 保险(2) + 高端制造成长(1) = 17只
+股票列表：银行(6) + 强周期能源(4) + 公用事业(4) + 消费白马(5) + 保险(2) + 医药红利股(3) + 高端制造成长(3) = 27只
 """
 
 import json
@@ -54,38 +54,51 @@ STOCK_MAP = {
     "601939": {"name": "建设银行", "category": "银行", "ticker": "601939.SS"},
     "601988": {"name": "中国银行", "category": "银行", "ticker": "601988.SS"},
     "600036": {"name": "招商银行", "category": "银行", "ticker": "600036.SS"},
-    # 强周期能源（3只）
+    # 强周期能源（4只）
     "601857": {"name": "中国石油", "category": "强周期能源", "ticker": "601857.SS"},
     "601088": {"name": "中国神华", "category": "强周期能源", "ticker": "601088.SS"},
     "600028": {"name": "中国石化", "category": "强周期能源", "ticker": "600028.SS"},
-    # 准公用事业（3只）
-    "600941": {"name": "中国移动", "category": "准公用事业", "ticker": "600941.SS"},
-    "600900": {"name": "长江电力", "category": "准公用事业", "ticker": "600900.SS"},
-    "600377": {"name": "宁沪高速", "category": "准公用事业", "ticker": "600377.SS"},
-    # 消费白马（2只）
+    "601225": {"name": "陕西煤业", "category": "强周期能源", "ticker": "601225.SS"},
+    # 公用事业（3只）
+    "600941": {"name": "中国移动", "category": "公用事业", "ticker": "600941.SS"},
+    "600900": {"name": "长江电力", "category": "公用事业", "ticker": "600900.SS"},
+    "600377": {"name": "宁沪高速", "category": "公用事业", "ticker": "600377.SS"},
+    "600642": {"name": "申能股份", "category": "公用事业", "ticker": "600642.SS"},
+    # 消费白马（5只）
     "600519": {"name": "贵州茅台", "category": "消费白马", "ticker": "600519.SS"},
     "000333": {"name": "美的集团", "category": "消费白马", "ticker": "000333.SZ"},
+    "000895": {"name": "双汇发展", "category": "消费白马", "ticker": "000895.SZ"},
+    "600887": {"name": "伊利股份", "category": "消费白马", "ticker": "600887.SS"},
+    "000651": {"name": "格力电器", "category": "消费白马", "ticker": "000651.SZ"},
     # 保险（2只）
     "601318": {"name": "中国平安", "category": "保险", "ticker": "601318.SS"},
     "601628": {"name": "中国人寿", "category": "保险", "ticker": "601628.SS"},
-    # 高端制造成长（1只）
+    # 医药红利股（3只）
+    "600750": {"name": "华润江中", "category": "医药红利股", "ticker": "600750.SS"},
+    "600566": {"name": "济川药业", "category": "医药红利股", "ticker": "600566.SS"},
+    "000538": {"name": "云南白药", "category": "医药红利股", "ticker": "000538.SZ"},
+    # 高端制造成长（3只）
     "300750": {"name": "宁德时代", "category": "高端制造成长", "ticker": "300750.SZ"},
+    "601668": {"name": "中国建筑", "category": "高端制造成长", "ticker": "601668.SS"},
+    "600066": {"name": "宇通客车", "category": "高端制造成长", "ticker": "600066.SS"},
 }
 
 # 目标股息率（用于信号判断）
 DIVIDEND_TARGET = {
     # 银行（6只）
     "601328": 5.62, "601288": 4.61, "601398": 4.22, "601939": 4.05, "601988": 3.97, "600036": 2.85,
-    # 强周期能源（3只）
-    "601857": 4.83, "601088": 6.50, "600028": 4.50,
-    # 准公用事业
-    "600941": 7.85, "600900": 4.50, "600377": 6.50,
-    # 消费白马
-    "600519": 4.00, "000333": 5.50,
-    # 保险
+    # 强周期能源（4只）
+    "601857": 4.83, "601088": 6.50, "600028": 4.50, "601225": 6.00,
+    # 公用事业（4只）
+    "600941": 7.85, "600900": 4.50, "600377": 6.50, "600642": 4.50,
+    # 消费白马（5只）
+    "600519": 4.00, "000333": 5.50, "000895": 5.50, "600887": 4.50, "000651": 6.00,
+    # 保险（2只）
     "601318": 3.86, "601628": 3.02,
-    # 高端制造成长
-    "300750": 0.41,
+    # 医药红利股（3只）
+    "600750": 4.50, "600566": 5.00, "000538": 4.00,
+    # 高端制造成长（3只）
+    "300750": 0.41, "601668": 5.00, "600066": 6.00,
 }
 
 # ============================================================
@@ -418,6 +431,34 @@ def calculate_buy_signals(stock_data, hs300_data):
                 reasons.append(f"📊 股息率={dividend:.2f}%（4.5%~5.5%观察区）")
                 score += 5
 
+        elif name == "陕西煤业":
+            # 核心估值指标：股息率 — 硬门槛：股息率<6.0% 不给绿色信号（煤炭周期股）
+            if dividend is None:
+                reasons.append("⚠️ 股息率数据缺失，无法判断")
+            elif dividend >= 6.0:
+                reasons.append(f"💎 股息率={dividend:.2f}% ≥ 6.0%（极佳买点）")
+                score += 50
+                excellent_buy_point = True
+                if pe is not None and pe <= 10:
+                    reasons.append(f"✅ PE={pe:.2f} ≤ 10（估值底部加持）")
+                    score += 20
+                elif pe is not None and pe <= 14:
+                    reasons.append(f"✅ PE={pe:.2f} ≤ 14（估值合理）")
+                    score += 10
+            elif dividend >= 5.0:
+                reasons.append(f"📊 股息率={dividend:.2f}%（5.0%~6.0%估值中枢区间，非最佳买点）")
+                score += 10
+                if pe is not None and pe <= 10:
+                    reasons.append(f"✅ PE={pe:.2f} ≤ 10（估值较低）")
+                    score += 10
+            elif dividend < 4.0:
+                reasons.append(f"⚠️ 股息率={dividend:.2f}% < 4.0%（高估区间，煤价下行风险）")
+            else:
+                reasons.append(f"📊 股息率={dividend:.2f}%（4.0%~5.0%观察区）")
+                score += 5
+            # 煤价提示
+            reasons.append("📡 辅助判断：秦皇岛5500大卡煤价600~800元/吨时盈利最稳")
+
         elif name == "中国海油":
             # 参照中国石油逻辑（强周期能源）
             if pb is not None:
@@ -433,8 +474,8 @@ def calculate_buy_signals(stock_data, hs300_data):
                 reasons.append(f"✅ 股息率={dividend:.2f}% ≥ 6%（高股息）")
                 score += 20
 
-    # ========== 准公用事业：核心看股息率与无风险利率对比，辅以 PE 历史分位 ==========
-    elif category == "准公用事业":
+    # ========== 公用事业：核心看股息率与无风险利率对比，辅以 PE 历史分位 ==========
+    elif category == "公用事业":
         if name == "中国移动":
             if dividend is not None:
                 if dividend >= 5.5:
@@ -490,6 +531,28 @@ def calculate_buy_signals(stock_data, hs300_data):
                 reasons.append(f"⚠️ PE={pe:.2f} > 15（溢价过高）")
                 score = max(0, score - 20)
 
+        elif name == "申能股份":
+            # 核心估值指标：股息率 + PE — 硬门槛：股息率≥4.5% 或 PE≤10 才极佳买点
+            if dividend is not None and dividend >= 4.5:
+                reasons.append(f"💎 股息率={dividend:.2f}% ≥ 4.5%（极佳买点，类债属性）")
+                score += 50
+                excellent_buy_point = True
+            elif dividend is not None and dividend >= 3.5:
+                reasons.append(f"✅ 股息率={dividend:.2f}%（3.5%~4.5%，合理买点）")
+                score += 30
+            elif dividend is not None and dividend < 3.0:
+                reasons.append(f"⚠️ 股息率={dividend:.2f}% < 3%（高估区间）")
+            if pe is not None and pe <= 10:
+                reasons.append(f"✅ PE={pe:.2f} ≤ 10（历史估值底部）")
+                if not (dividend is not None and dividend >= 4.5):
+                    score += 50
+                    excellent_buy_point = True
+                else:
+                    score += 20
+            elif pe is not None and pe > 15:
+                reasons.append(f"⚠️ PE={pe:.2f} > 15（确定性溢价过高）")
+                score = max(0, score - 20)
+
     # ========== 消费白马：核心看前瞻 PE 历史分位 + 业绩增速匹配度，辅以股息率 ==========
     elif category == "消费白马":
         if name == "贵州茅台":
@@ -537,6 +600,75 @@ def calculate_buy_signals(stock_data, hs300_data):
                 reasons.append(f"📊 PE={pe:.2f}（14~16区间，偏贵）")
                 score += 5
 
+        elif name == "双汇发展":
+            # 核心估值指标：PE — 硬门槛：PE>15 不给绿色信号
+            if pe is None:
+                reasons.append("⚠️ PE数据缺失，无法判断")
+            elif pe <= 15:
+                reasons.append(f"💎 PE={pe:.2f} ≤ 15（极佳买点，肉制品龙头估值底部）")
+                score += 50
+                excellent_buy_point = True
+                if dividend is not None and dividend >= 5.0:
+                    reasons.append(f"✅ 股息率={dividend:.2f}% ≥ 5.0%（高股息）")
+                    score += 30
+                elif dividend is not None and dividend >= 4.0:
+                    reasons.append(f"✅ 股息率={dividend:.2f}%（4.0%~5.0%，合理）")
+                    score += 20
+            elif pe <= 20:
+                reasons.append(f"📊 PE={pe:.2f}（15~20估值中枢区间，非最佳买点）")
+                score += 10
+                if dividend is not None and dividend >= 4.0:
+                    reasons.append(f"✅ 股息率={dividend:.2f}%（有防御属性）")
+                    score += 10
+            elif pe > 25:
+                reasons.append(f"⚠️ PE={pe:.2f} > 25（增长放缓下估值偏贵）")
+                score = max(0, score - 20)
+
+        elif name == "伊利股份":
+            # 核心估值指标：PE — 硬门槛：PE>18 不给绿色信号
+            if pe is None:
+                reasons.append("⚠️ PE数据缺失，无法判断")
+            elif pe <= 18:
+                reasons.append(f"💎 PE={pe:.2f} ≤ 18（极佳买点，乳业龙头估值底部）")
+                score += 50
+                excellent_buy_point = True
+                if dividend is not None and dividend >= 4.0:
+                    reasons.append(f"✅ 股息率={dividend:.2f}% ≥ 4.0%（加分）")
+                    score += 20
+            elif pe <= 22:
+                reasons.append(f"📊 PE={pe:.2f}（18~22估值中枢区间，非最佳买点）")
+                score += 10
+                if dividend is not None and dividend >= 4.0:
+                    reasons.append(f"✅ 股息率={dividend:.2f}%（有防御属性）")
+                    score += 10
+            elif pe > 28:
+                reasons.append(f"⚠️ PE={pe:.2f} > 28（估值溢价透支）")
+                score = max(0, score - 20)
+
+        elif name == "格力电器":
+            # 核心估值指标：PE — 硬门槛：PE>8 不给绿色信号
+            if pe is None:
+                reasons.append("⚠️ PE数据缺失，无法判断")
+            elif pe <= 8:
+                reasons.append(f"💎 PE={pe:.2f} ≤ 8（极佳买点，家电估值底部）")
+                score += 50
+                excellent_buy_point = True
+                if dividend is not None and dividend >= 5.0:
+                    reasons.append(f"✅ 股息率={dividend:.2f}% ≥ 5.0%（极佳）")
+                    score += 30
+                elif dividend is not None and dividend >= 4.0:
+                    reasons.append(f"✅ 股息率={dividend:.2f}%（4.0%~5.0%，合理）")
+                    score += 20
+            elif pe <= 11:
+                reasons.append(f"📊 PE={pe:.2f}（8~11估值中枢区间，非最佳买点）")
+                score += 10
+                if dividend is not None and dividend >= 4.0:
+                    reasons.append(f"✅ 股息率={dividend:.2f}%（有防御属性）")
+                    score += 10
+            elif pe > 14:
+                reasons.append(f"⚠️ PE={pe:.2f} > 14（空调天花板下增速难支撑）")
+                score = max(0, score - 20)
+
     # ========== 保险：PEV（内含价值倍数）+ 股息率 — 硬门槛：PEV<0.7 才进入高分区间 ==========
     elif category == "保险":
         pev = stock_data.get("pev") or pb   # 保险用PEV，没有则用PB近似
@@ -560,6 +692,86 @@ def calculate_buy_signals(stock_data, hs300_data):
                 score += 10
         else:
             reasons.append(f"⚠️ PEV≈{pev:.2f} > 1.0（高估区间，性价比下降）")
+
+    # ========== 医药红利股：核心看股息率 + PE，红利属性优先 ==========
+    elif category == "医药红利股":
+        if name == "华润江中":
+            # 核心估值指标：股息率 — 硬门槛：股息率<4.5% 不给绿色信号
+            if dividend is None:
+                reasons.append("⚠️ 股息率数据缺失，无法判断")
+            elif dividend >= 4.5:
+                reasons.append(f"💎 股息率={dividend:.2f}% ≥ 4.5%（极佳买点，高分红中药股）")
+                score += 50
+                excellent_buy_point = True
+                if pe is not None and pe <= 15:
+                    reasons.append(f"✅ PE={pe:.2f} ≤ 15（估值合理）")
+                    score += 20
+                elif pe is not None and pe <= 20:
+                    reasons.append(f"✅ PE={pe:.2f} ≤ 20（估值可接受）")
+                    score += 10
+            elif dividend >= 3.5:
+                reasons.append(f"📊 股息率={dividend:.2f}%（3.5%~4.5%估值中枢区间，非最佳买点）")
+                score += 10
+                if pe is not None and pe <= 15:
+                    reasons.append(f"✅ PE={pe:.2f} ≤ 15（估值较低）")
+                    score += 10
+            elif dividend < 3.0:
+                reasons.append(f"⚠️ 股息率={dividend:.2f}% < 3%（分红弱化，性价比下降）")
+            else:
+                reasons.append(f"📊 股息率={dividend:.2f}%（3.0%~3.5%观察区）")
+                score += 5
+
+        elif name == "济川药业":
+            # 核心估值指标：股息率 — 硬门槛：股息率<5.0% 不给绿色信号
+            if dividend is None:
+                reasons.append("⚠️ 股息率数据缺失，无法判断")
+            elif dividend >= 5.0:
+                reasons.append(f"💎 股息率={dividend:.2f}% ≥ 5.0%（极佳买点，超高分红）")
+                score += 50
+                excellent_buy_point = True
+                if pe is not None and pe <= 12:
+                    reasons.append(f"✅ PE={pe:.2f} ≤ 12（估值底部）")
+                    score += 20
+                elif pe is not None and pe <= 16:
+                    reasons.append(f"✅ PE={pe:.2f} ≤ 16（估值合理）")
+                    score += 10
+            elif dividend >= 4.0:
+                reasons.append(f"📊 股息率={dividend:.2f}%（4.0%~5.0%估值中枢区间，非最佳买点）")
+                score += 10
+                if pe is not None and pe <= 12:
+                    reasons.append(f"✅ PE={pe:.2f} ≤ 12（估值较低）")
+                    score += 10
+            elif dividend < 3.0:
+                reasons.append(f"⚠️ 股息率={dividend:.2f}% < 3%（分红弱化，性价比下降）")
+            else:
+                reasons.append(f"📊 股息率={dividend:.2f}%（3.0%~4.0%观察区）")
+                score += 5
+
+        elif name == "云南白药":
+            # 核心估值指标：股息率 — 硬门槛：股息率<4.0% 不给绿色信号
+            if dividend is None:
+                reasons.append("⚠️ 股息率数据缺失，无法判断")
+            elif dividend >= 4.0:
+                reasons.append(f"💎 股息率={dividend:.2f}% ≥ 4.0%（极佳买点，品牌中药分红稳定）")
+                score += 50
+                excellent_buy_point = True
+                if pe is not None and pe <= 20:
+                    reasons.append(f"✅ PE={pe:.2f} ≤ 20（估值合理）")
+                    score += 20
+                elif pe is not None and pe <= 25:
+                    reasons.append(f"✅ PE={pe:.2f} ≤ 25（估值可接受）")
+                    score += 10
+            elif dividend >= 3.0:
+                reasons.append(f"📊 股息率={dividend:.2f}%（3.0%~4.0%估值中枢区间，非最佳买点）")
+                score += 10
+                if pe is not None and pe <= 20:
+                    reasons.append(f"✅ PE={pe:.2f} ≤ 20（估值较低）")
+                    score += 10
+            elif dividend < 2.5:
+                reasons.append(f"⚠️ 股息率={dividend:.2f}% < 2.5%（分红偏弱，性价比下降）")
+            else:
+                reasons.append(f"📊 股息率={dividend:.2f}%（2.5%~3.0%观察区）")
+                score += 5
 
     # ========== 高端制造成长：核心看 PEG + 行业周期位置，辅以现金流 — 硬门槛：PE≤20 才进入高分区间 ==========
     elif category == "高端制造成长":
@@ -588,6 +800,54 @@ def calculate_buy_signals(stock_data, hs300_data):
                 score += 5
             # 辅助：市占率提示
             reasons.append("📡 辅助判断：全球市占率>35%、储能增速>30%为加分项")
+
+        elif name == "中国建筑":
+            # 前瞻PE + PEG
+            peg = stock_data.get("peg")
+            if pe is None:
+                reasons.append("⚠️ PE数据缺失，无法判断")
+            elif pe <= 5 and (peg is None or peg <= 0.8):
+                peg_str = f" 且 PEG={peg:.2f} ≤ 0.8" if peg else ""
+                reasons.append(f"💎 前瞻PE={pe:.2f} ≤ 5{peg_str}（极佳买点，低估值建筑龙头）")
+                score += 50
+                excellent_buy_point = True
+            elif pe <= 7 and (peg is None or peg <= 1.0):
+                reasons.append(f"📊 前瞻PE={pe:.2f}（5~7估值中枢区间，非最佳买点）")
+                score += 10
+                if peg is not None and peg <= 1.0:
+                    reasons.append(f"✅ PEG={peg:.2f} ≤ 1.0（成长与估值匹配）")
+                    score += 10
+            elif pe > 9 or (peg is not None and peg > 1.2):
+                reasons.append(f"⚠️ 前瞻PE={pe:.2f} > 9 或 PEG={peg:.2f} > 1.2（增速预期透支）")
+                score = max(0, score - 20)
+            else:
+                reasons.append(f"📊 前瞻PE={pe:.2f}（7~9区间，偏贵）")
+                score += 5
+            reasons.append("📡 辅助判断：新签合同额增速、REITs化债政策为加分项")
+
+        elif name == "宇通客车":
+            # 前瞻PE + PEG
+            peg = stock_data.get("peg")
+            if pe is None:
+                reasons.append("⚠️ PE数据缺失，无法判断")
+            elif pe <= 12 and (peg is None or peg <= 0.8):
+                peg_str = f" 且 PEG={peg:.2f} ≤ 0.8" if peg else ""
+                reasons.append(f"💎 前瞻PE={pe:.2f} ≤ 12{peg_str}（极佳买点，客车龙头估值底部）")
+                score += 50
+                excellent_buy_point = True
+            elif pe <= 15 and (peg is None or peg <= 1.0):
+                reasons.append(f"📊 前瞻PE={pe:.2f}（12~15估值中枢区间，非最佳买点）")
+                score += 10
+                if peg is not None and peg <= 1.0:
+                    reasons.append(f"✅ PEG={peg:.2f} ≤ 1.0（成长与估值匹配）")
+                    score += 10
+            elif pe > 20 or (peg is not None and peg > 1.2):
+                reasons.append(f"⚠️ 前瞻PE={pe:.2f} > 20 或 PEG={peg:.2f} > 1.2（增速预期透支）")
+                score = max(0, score - 20)
+            else:
+                reasons.append(f"📊 前瞻PE={pe:.2f}（15~20区间，偏贵）")
+                score += 5
+            reasons.append("📡 辅助判断：海外新能源客车出口增速、客车替换周期为加分项")
 
     # ========== 通用加分项（降低权重，避免把"非最佳买点"推成绿色） ==========
     # 大盘恐慌信号
@@ -650,7 +910,7 @@ def build_stock_data(hs300_data, oil_data=None):
     """构建所有股票的数据"""
     stock_count = len(STOCK_MAP)
     logger.info(f"📊 开始获取{stock_count}只股票数据...")
-    categories = {"银行": [], "强周期能源": [], "准公用事业": [], "消费白马": [], "保险": [], "高端制造成长": []}
+    categories = {"银行": [], "强周期能源": [], "公用事业": [], "消费白马": [], "保险": [], "医药红利股": [], "高端制造成长": []}
     summary = {"total_stocks": stock_count, "green_count": 0, "yellow_count": 0, "red_count": 0}
 
     for idx, (code, info) in enumerate(STOCK_MAP.items()):
@@ -705,12 +965,14 @@ def build_stock_data(hs300_data, oil_data=None):
             categories["银行"].append(stock_data)
         elif category == "强周期能源":
             categories["强周期能源"].append(stock_data)
-        elif category == "准公用事业":
-            categories["准公用事业"].append(stock_data)
+        elif category == "公用事业":
+            categories["公用事业"].append(stock_data)
         elif category == "消费白马":
             categories["消费白马"].append(stock_data)
         elif category == "保险":
             categories["保险"].append(stock_data)
+        elif category == "医药红利股":
+            categories["医药红利股"].append(stock_data)
         elif category == "高端制造成长":
             categories["高端制造成长"].append(stock_data)
         
@@ -735,7 +997,7 @@ def build_stock_data(hs300_data, oil_data=None):
 # ============================================================
 def main():
     logger.info("=" * 50)
-    logger.info("🚀 A股16只赚钱天团股票监测系统 开始运行")
+    logger.info("🚀 A股优选分红股票监测系统 开始运行")
     logger.info("=" * 50)
 
     # 获取国际原油价格（Brent）
