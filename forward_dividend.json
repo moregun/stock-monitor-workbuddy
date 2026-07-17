@@ -370,7 +370,7 @@
     "name": "申能股份",
     "dividends": [
       {
-        "报告时间": "2025中报",
+        "报告时间": "2024年报",
         "分红说明": "10派4.5元(含税)",
         "每股分红": 0.45
       },
@@ -380,8 +380,8 @@
         "每股分红": 0.46
       }
     ],
-    "total_dividend_per_share": 0.91,
-    "forward_dividend_yield_base": 0.91
+    "total_dividend_per_share": 0.46,
+    "forward_dividend_yield_base": 0.46
   },
   "601225": {
     "name": "陕西煤业",
