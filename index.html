@@ -288,6 +288,49 @@
       .stock-table { font-size: 13px; }
       .stock-table th, .stock-table td { padding: 10px 8px; }
     }
+
+    /* ---------- 风格轮动监控（面板底部） ---------- */
+    .style-rotation-card {
+      margin: 0 24px 28px 24px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 20px 24px;
+    }
+    .style-rotation-card .sr-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .sr-title { font-size: 18px; font-weight: 700; color: #f0f6ff; display: flex; align-items: center; gap: 8px; }
+    .sr-title span { color: #ff9f43; }
+    .sr-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 14px;
+    }
+    .sr-badge.opportunity { background: rgba(0,200,83,0.15); color: #00c853; border: 1px solid rgba(0,200,83,0.4); }
+    .sr-badge.neutral { background: rgba(255,171,0,0.15); color: #ffab00; border: 1px solid rgba(255,171,0,0.4); }
+    .sr-badge.warning { background: rgba(255,23,68,0.15); color: #ff1744; border: 1px solid rgba(255,23,68,0.4); }
+    .sr-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }
+    .sr-metric { background: #1c2333; border: 1px solid #30363d; border-radius: 10px; padding: 14px 16px; }
+    .sr-metric .label { font-size: 12px; color: #8b949e; }
+    .sr-metric .value { font-size: 22px; font-weight: 800; color: #f0f6ff; margin-top: 4px; }
+    .sr-metric .sub { font-size: 12px; color: #8b949e; margin-top: 2px; }
+    .sr-chart { background: #0f1117; border: 1px solid #30363d; border-radius: 10px; padding: 12px; }
+    .sr-chart svg { width: 100%; height: auto; display: block; }
+    .sr-desc { font-size: 12px; color: #8b949e; margin-top: 12px; line-height: 1.8; }
+    .sr-desc code { background: #21262d; padding: 1px 6px; border-radius: 4px; color: #c9d1d9; }
+    .sr-loading, .sr-error { text-align: center; padding: 40px 20px; color: #8b949e; }
+
+    @media (max-width: 768px) {
+      .sr-metrics { grid-template-columns: repeat(2, 1fr); }
+    }
   </style>
 </head>
 <body>
@@ -336,6 +379,9 @@
 
 <!-- ========== 内容容器 ========== -->
 <div id="content"></div>
+
+<!-- ========== 风格轮动监控（面板底部） ========== -->
+<div id="style-rotation"></div>
 
 <!-- ========== 加载/错误状态 ========== -->
 <div class="loading-box" id="loading-box">📡 正在加载数据，请稍候...</div>
@@ -657,10 +703,96 @@ function render(data) {
   }
   document.getElementById('content').innerHTML = contentHtml;
 
+  // 风格轮动监控（面板底部）
+  loadStyleRotation();
+
   // 4. 更新时间
   document.getElementById('update-time').textContent = '最后更新：' + (data.update_time || '--');
   document.getElementById('loading-box').style.display = 'none';
   document.getElementById('error-box').style.display = 'none';
+}
+
+/* ========== 风格轮动监控（创业板/中证红利） ========== */
+function buildRatioChart(history, currentRatio, buy, sell) {
+  if (!history || history.length === 0) return '';
+  const W = 680, H = 240, padL = 44, padR = 16, padT = 16, padB = 28;
+  const ratios = history.map(function(h){ return h.ratio; });
+  let minR = Math.min.apply(null, ratios.concat([buy, sell]));
+  let maxR = Math.max.apply(null, ratios.concat([buy, sell]));
+  const span = (maxR - minR) || 0.1;
+  minR -= span * 0.1; maxR += span * 0.1;
+  const n = history.length;
+  function x(i){ return padL + (W - padL - padR) * (n === 1 ? 0.5 : i / (n - 1)); }
+  function y(r){ return padT + (H - padT - padB) * (1 - (r - minR) / (maxR - minR || 1)); }
+  let pts = history.map(function(h, i){ return x(i).toFixed(1) + ',' + y(h.ratio).toFixed(1); }).join(' ');
+  const yBuy = y(buy), ySell = y(sell);
+  const lastX = x(n - 1), lastY = y(currentRatio);
+  let xlabels = '';
+  const step = Math.max(1, Math.floor(n / 6));
+  for (let i = 0; i < n; i += step) {
+    xlabels += '<text x="' + x(i).toFixed(1) + '" y="' + (H - 10) + '" fill="#8b949e" font-size="10" text-anchor="middle">' + history[i].date.slice(2) + '</text>';
+  }
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" preserveAspectRatio="xMidYMid meet">'
+    + '<line x1="' + padL + '" y1="' + yBuy + '" x2="' + (W - padR) + '" y2="' + yBuy + '" stroke="#16a34a" stroke-width="1" stroke-dasharray="5,4" opacity="0.7"/>'
+    + '<line x1="' + padL + '" y1="' + ySell + '" x2="' + (W - padR) + '" y2="' + ySell + '" stroke="#dc2626" stroke-width="1" stroke-dasharray="5,4" opacity="0.7"/>'
+    + '<polyline points="' + pts + '" fill="none" stroke="#58a6ff" stroke-width="2"/>'
+    + '<circle cx="' + lastX.toFixed(1) + '" cy="' + lastY.toFixed(1) + '" r="4" fill="#ff9f43" stroke="#fff" stroke-width="1"/>'
+    + xlabels
+    + '<text x="' + (padL - 6) + '" y="' + (yBuy + 3).toFixed(1) + '" fill="#16a34a" font-size="10" text-anchor="end">' + buy + '</text>'
+    + '<text x="' + (padL - 6) + '" y="' + (ySell + 3).toFixed(1) + '" fill="#dc2626" font-size="10" text-anchor="end">' + sell + '</text>'
+    + '<line x1="' + padL + '" y1="' + padT + '" x2="' + padL + '" y2="' + (H - padB) + '" stroke="#30363d" stroke-width="1"/>'
+    + '<line x1="' + padL + '" y1="' + (H - padB) + '" x2="' + (W - padR) + '" y2="' + (H - padB) + '" stroke="#30363d" stroke-width="1"/>'
+    + '</svg>';
+}
+
+function renderStyleRotation(d) {
+  const container = document.getElementById('style-rotation');
+  if (!d || d.ratio === null || d.ratio === undefined) {
+    container.innerHTML = '<div class="style-rotation-card"><div class="sr-error">⚠️ 风格轮动数据暂不可用（未生成 style_rotation_data.json）<br>请先运行 style_rotation/main.py 生成数据</div></div>';
+    return;
+  }
+  const sigMap = {
+    opportunity: {cls: 'opportunity', label: '✅ 机会：成长低估，布局创业板'},
+    neutral:     {cls: 'neutral',     label: '➖ 中性：均衡配置'},
+    warning:     {cls: 'warning',     label: '⚠️ 预警：成长高估，转向红利'}
+  };
+  const sig = sigMap[d.signal] || sigMap.neutral;
+  const cy = d.index_cy || {}, div = d.index_div || {};
+  const buy = d.buy_threshold, sell = d.sell_threshold, ratio = d.ratio;
+  const chart = buildRatioChart(d.history || [], ratio, buy, sell);
+  const ratioColor = sig.cls === 'opportunity' ? '#00c853' : sig.cls === 'warning' ? '#ff1744' : '#ffab00';
+  const sampleNote = d.is_sample ? '<br><span style="color:#ffab00;">⚠️ 当前为示例数据，运行 style_rotation/main.py 后将更新为真实数据</span>' : '';
+  container.innerHTML = ''
+    + '<div class="style-rotation-card">'
+    + '  <div class="sr-header">'
+    + '    <div class="sr-title">🔄 <span>创业板 / 中证红利</span> 风格轮动监控</div>'
+    + '    <div class="sr-badge ' + sig.cls + '">' + sig.label + '</div>'
+    + '  </div>'
+    + '  <div class="sr-metrics">'
+    + '    <div class="sr-metric"><div class="label">创业板指 (399006)</div><div class="value">' + (cy.close != null ? cy.close.toFixed(2) : '--') + '</div></div>'
+    + '    <div class="sr-metric"><div class="label">中证红利 (000922)</div><div class="value">' + (div.close != null ? div.close.toFixed(2) : '--') + '</div></div>'
+    + '    <div class="sr-metric"><div class="label">比值 ratio</div><div class="value" style="color:' + ratioColor + '">' + ratio.toFixed(4) + '</div><div class="sub">低估≤' + buy + ' / 高估≥' + sell + '</div></div>'
+    + '    <div class="sr-metric"><div class="label">数据日期</div><div class="value" style="font-size:18px">' + (d.data_date || '--') + '</div></div>'
+    + '  </div>'
+    + '  <div class="sr-chart">' + chart + '</div>'
+    + '  <div class="sr-desc">'
+    + '    指标：<code>ratio = 创业板指 / 中证红利</code> ｜ 黄金分割阈值：<code>0.382 / 0.618</code><br>'
+    + (d.signal_text || '') + sampleNote + '<br>'
+    + '    更新时间：' + (d.update_time || '--') + ' ｜ 数据来源：akshare ｜ 仅量化观测，不构成投资建议'
+    + '  </div>'
+    + '</div>';
+}
+
+async function loadStyleRotation() {
+  const container = document.getElementById('style-rotation');
+  try {
+    const resp = await fetch('style_rotation/style_rotation_data.json?t=' + Date.now());
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const d = await resp.json();
+    renderStyleRotation(d);
+  } catch (e) {
+    container.innerHTML = '<div class="style-rotation-card"><div class="sr-error">⚠️ 风格轮动数据暂不可用（' + e.message + '）<br>请先运行 style_rotation/main.py 生成 style_rotation_data.json</div></div>';
+  }
 }
 
 /* ========== 加载数据 ========== */
