@@ -1,9 +1,9 @@
 {
-  "update_time": "2026-10-01 15:57:13 (北京时间)",
-  "data_date": "2026-10-01",
+  "update_time": "2026-10-02 15:42:10 (北京时间)",
+  "data_date": "2026-10-02",
   "oil_price": {
-    "price": 99.54,
-    "change_pct": 1.54
+    "price": 101.3,
+    "change_pct": -0.99
   },
   "hs300": {
     "price": 4357.6157,
@@ -51,7 +51,7 @@
         "pev": 0.853539,
         "dividend_yield": 3.58,
         "dividend_yield_target": 4.61,
-        "market_cap": 24393.82,
+        "market_cap": null,
         "signal": "red",
         "score": 0,
         "reasons": [
@@ -152,15 +152,15 @@
         "price": 11.21,
         "change_pct": 0.81,
         "forward_dividend": 0.47,
-        "pe": 11.438775,
+        "pe": 11.677084,
         "pb": 1.252514,
         "peg": 0.28,
         "pev": 1.252514,
         "dividend_yield": 4.19,
         "dividend_yield_target": 4.83,
         "market_cap": 20516.65,
-        "oil_price": 99.54,
-        "oil_change_pct": 1.54,
+        "oil_price": 101.3,
+        "oil_change_pct": -0.99,
         "signal": "red",
         "score": 10,
         "reasons": [
@@ -176,15 +176,15 @@
         "price": 47.8,
         "change_pct": 1.06,
         "forward_dividend": 2.01,
-        "pe": 18.174904,
+        "pe": 17.703703,
         "pb": 2.2575922,
         "peg": 14.94,
         "pev": 2.2575922,
         "dividend_yield": 4.21,
         "dividend_yield_target": 6.5,
         "market_cap": 10367.55,
-        "oil_price": 99.54,
-        "oil_change_pct": 1.54,
+        "oil_price": 101.3,
+        "oil_change_pct": -0.99,
         "signal": "red",
         "score": 0,
         "reasons": [
@@ -206,8 +206,8 @@
         "dividend_yield": 3.79,
         "dividend_yield_target": 4.5,
         "market_cap": 6373.66,
-        "oil_price": 99.54,
-        "oil_change_pct": 1.54,
+        "oil_price": 101.3,
+        "oil_change_pct": -0.99,
         "signal": "green",
         "score": 50,
         "reasons": [
@@ -230,8 +230,8 @@
         "dividend_yield": 3.64,
         "dividend_yield_target": 6.0,
         "market_cap": 2523.61,
-        "oil_price": 99.54,
-        "oil_change_pct": 1.54,
+        "oil_price": 101.3,
+        "oil_change_pct": -0.99,
         "signal": "red",
         "score": 0,
         "reasons": [
@@ -251,7 +251,7 @@
         "forward_dividend": 4.7037,
         "pe": 15.834711,
         "pb": 1.4613016,
-        "peg": 77.89,
+        "peg": 76.64,
         "pev": 1.4613016,
         "dividend_yield": 4.91,
         "dividend_yield_target": 7.85,
@@ -337,11 +337,11 @@
         "forward_dividend": 51.98123,
         "pe": 19.342554,
         "pb": 6.2621026,
-        "peg": 2.05,
+        "peg": 2.09,
         "pev": 6.2621026,
         "dividend_yield": 4.13,
         "dividend_yield_target": 4.0,
-        "market_cap": 15733.78,
+        "market_cap": null,
         "signal": "yellow",
         "score": 45,
         "reasons": [
@@ -364,7 +364,7 @@
         "pev": 2.8088508,
         "dividend_yield": 5.37,
         "dividend_yield_target": 5.5,
-        "market_cap": 6111.56,
+        "market_cap": 6111.58,
         "signal": "red",
         "score": 20,
         "reasons": [
@@ -380,7 +380,7 @@
         "price": 23.66,
         "change_pct": 1.07,
         "forward_dividend": 1.45,
-        "pe": 15.986486,
+        "pe": 16.095238,
         "pb": 3.9224138,
         "peg": 1.59,
         "pev": 3.9224138,
@@ -390,7 +390,7 @@
         "signal": "red",
         "score": 20,
         "reasons": [
-          "📊 PE=15.99（15~20估值中枢区间，非最佳买点）",
+          "📊 PE=16.10（15~20估值中枢区间，非最佳买点）",
           "✅ 股息率=6.13%（有防御属性）"
         ],
         "advice": "🔴 不建议（等待更好买点）"
@@ -454,7 +454,7 @@
         "pev": 0.93860084,
         "dividend_yield": 5.07,
         "dividend_yield_target": 3.86,
-        "market_cap": 9649.56,
+        "market_cap": null,
         "signal": "red",
         "score": 20,
         "reasons": [
@@ -561,7 +561,7 @@
         "price": 291.11,
         "change_pct": 1.5,
         "forward_dividend": 7.964,
-        "pe": 15.542445,
+        "pe": 15.550748,
         "pb": 3.5286913,
         "peg": 0.71,
         "pev": 3.5286913,
@@ -571,7 +571,7 @@
         "signal": "green",
         "score": 50,
         "reasons": [
-          "💎 前瞻PE=15.54 ≤ 20 且 PEG=0.71 ≤ 0.8（极佳买点，周期+估值底部）",
+          "💎 前瞻PE=15.55 ≤ 20 且 PEG=0.71 ≤ 0.8（极佳买点，周期+估值底部）",
           "📡 辅助判断：全球市占率>35%、储能增速>30%为加分项"
         ],
         "advice": "🟢 可买入"
