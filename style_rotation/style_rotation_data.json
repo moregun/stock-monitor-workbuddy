@@ -1,5 +1,5 @@
 {
-  "update_time": "2026-10-11 14:03:35 (北京时间)",
+  "update_time": "2026-10-11 21:25:29 (北京时间)",
   "data_date": "2019-01-30",
   "index_cy": {
     "code": "399006",
@@ -14,8 +14,10 @@
   "ratio": 0.3076,
   "buy_threshold": 0.382,
   "sell_threshold": 0.618,
-  "signal": "opportunity",
-  "signal_text": "【✅ 布局信号】成长相对红利低估，可逢低布局创业板",
+  "signal": "stale",
+  "signal_text": "【⚠️ 数据过期】最新数据日期为 2019-01-30，距今 2811 天，超出阈值 14 天，暂不输出买卖信号，请检查数据源",
+  "is_stale": true,
+  "staleness_days": 2811,
   "history": [
     {
       "date": "2015-01-05",
