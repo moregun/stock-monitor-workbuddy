@@ -14,6 +14,72 @@ import time
 import requests
 from bs4 import BeautifulSoup
 
+# 报告期归一化：这些后缀代表同一笔分红的中间状态，去重时应视为同一报告期
+REPORT_SUFFIXES = ("预案", "实施", "预披露", "董事会", "股东大会")
+
+
+def canonical_report(report_time):
+    """归一化报告期：去掉预案/实施等后缀，如 '2025年报预案' -> '2025年报'"""
+    if not report_time:
+        return ""
+    rt = str(report_time)
+    for suffix in REPORT_SUFFIXES:
+        rt = rt.replace(suffix, "")
+    return rt.strip()
+
+
+def is_proposal(report_time):
+    """判断是否为预案（预案应被正式年报/实施取代，不重复累计）"""
+    return "预案" in str(report_time or "")
+
+
+def dedupe_dividends(dividends):
+    """
+    按报告期去重，修复分红重复累计：
+    - 同一报告期下同时存在预案与正式条目时，保留正式、丢弃预案（预案会被正式取代，二者是同一笔分红）；
+    - 同一报告期下有多条非预案条目（如年报 + 特别分红），如实保留，不合并不同金额。
+    返回去重后的列表。
+    """
+    groups = {}
+    order = []
+    for d in dividends:
+        key = canonical_report(d.get("报告时间"))
+        if key not in groups:
+            groups[key] = []
+            order.append(key)
+        groups[key].append(d)
+
+    cleaned = []
+    for key in order:
+        entries = groups[key]
+        formal = [d for d in entries if not is_proposal(d.get("报告时间"))]
+        if len(entries) > 1 and formal:
+            # 同报告期同时含预案与正式：丢弃预案，保留全部正式条目
+            cleaned.extend(formal)
+        else:
+            cleaned.extend(entries)
+    return cleaned
+
+
+def fiscal_year_total(dividends):
+    """
+    按「最新财年」汇总前瞻分红，修复把往年年报重复计入的问题。
+    只汇总最新年份所有报告期（如 2025半年报 + 2025年报 = 2025 全年分红），
+    排除更早年份记录（如 2024年报）。无法识别年份时退回对全部记录求和（兼容旧数据）。
+    """
+    if not dividends:
+        return 0.0
+    year_map = {}
+    for d in dividends:
+        m = re.search(r"(20\d{2})", str(d.get("报告时间") or ""))
+        year = m.group(1) if m else None
+        year_map.setdefault(year, []).append(d)
+    years = [y for y in year_map if y]
+    if not years:
+        return float(sum(float(d["每股分红"]) for d in dividends))
+    latest_year = max(years)
+    return float(sum(float(d["每股分红"]) for d in year_map[latest_year]))
+
 # 读取 forward_dividend.json 获取股票列表
 def load_stock_list():
     """从 forward_dividend.json 读取股票列表"""
@@ -123,40 +189,48 @@ def update_forward_dividend_json():
         stock_name = stock_info.get('name', stock_code)
         
         print(f"处理 {stock_code} {stock_name}")
-        
-        # 检查是否已有2025年报数据
-        dividends = stock_info.get('dividends', [])
-        has_2025_annual = any(d.get('报告时间') == '2025年报' for d in dividends)
-        
+
+        # 先对已有分红做一次去重（修复历史预案/年报重复累计）
+        dividends = dedupe_dividends(stock_info.get('dividends', []))
+
+        # 检查是否已有2025年报数据（预案也视为已有，避免重复抓取/重复累计）
+        has_2025_annual = any(canonical_report(d.get('报告时间')) == '2025年报' for d in dividends)
+
         if has_2025_annual:
+            stock_info['dividends'] = dividends
             print(f"  ✅ 已有2025年报数据，跳过")
             print()
             continue
-        
+
         # 抓取2025年报分红数据
         dividend_data = fetch_2025_dividend(stock_code, stock_name)
-        
+
         if dividend_data:
-            # 添加新分红数据
-            stock_info['dividends'].append({
-                '报告时间': dividend_data['report_time'],
+            new_report = dividend_data['report_time']  # '2025年报'
+            new_canon = canonical_report(new_report)
+            new_entry = {
+                '报告时间': new_report,
                 '分红说明': dividend_data['dividend_text'],
                 '每股分红': dividend_data['dividend_per_share']
-            })
-            
-            # 重新计算 total_dividend_per_share
-            total = sum([d['每股分红'] for d in stock_info['dividends']])
-            stock_info['total_dividend_per_share'] = round(total, 4)
-            stock_info['forward_dividend_yield_base'] = round(total, 4)
-            
+            }
+            # 替换同报告期的旧条目（预案/旧数据），而非追加，避免重复累计
+            dividends = [d for d in dividends if canonical_report(d.get('报告时间')) != new_canon]
+            dividends.append(new_entry)
+            stock_info['dividends'] = dedupe_dividends(dividends)
+
+            # 重新计算 total_dividend_per_share（按最新财年汇总，排除往年年报）
+            total = round(fiscal_year_total(stock_info['dividends']), 4)
+            stock_info['total_dividend_per_share'] = total
+            stock_info['forward_dividend_yield_base'] = total
+
             # 删除 note 字段（如果有）
             if 'note' in stock_info:
                 del stock_info['note']
-            
+
             print(f"  ✅ 已更新 {stock_name}")
-            print(f"      总分红: {total:.4f} 元/股")
+            print(f"      总分红(最新财年): {total:.4f} 元/股（去重后 {len(stock_info['dividends'])} 条）")
             print()
-            
+
             updated_count += 1
         else:
             print(f"  ⚠️  未能获取2025年报分红数据")

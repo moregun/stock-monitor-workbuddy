@@ -25,18 +25,13 @@
         "每股分红": 0.565
       },
       {
-        "报告时间": "2025年报预案",
-        "分红说明": "10派5.01元(含税)",
-        "每股分红": 0.501
-      },
-      {
         "报告时间": "2025年报",
         "分红说明": "10派5.01元(含税)",
         "每股分红": 0.501
       }
     ],
-    "total_dividend_per_share": 1.567,
-    "forward_dividend_yield_base": 1.567
+    "total_dividend_per_share": 1.066,
+    "forward_dividend_yield_base": 1.066
   },
   "601998": {
     "name": "中信银行",
@@ -222,8 +217,8 @@
         "每股分红": 0.112
       }
     ],
-    "total_dividend_per_share": 0.20,
-    "forward_dividend_yield_base": 0.20
+    "total_dividend_per_share": 0.2,
+    "forward_dividend_yield_base": 0.2
   },
   "601318": {
     "name": "中国平安",
@@ -312,8 +307,8 @@
         "每股分红": 0.79
       }
     ],
-    "total_dividend_per_share": 1.00,
-    "forward_dividend_yield_base": 1.00
+    "total_dividend_per_share": 1.0,
+    "forward_dividend_yield_base": 1.0
   },
   "600377": {
     "name": "宁沪高速",
@@ -346,8 +341,8 @@
         "每股分红": 28.02423
       }
     ],
-    "total_dividend_per_share": 51.98123,
-    "forward_dividend_yield_base": 51.98123
+    "total_dividend_per_share": 51.9812,
+    "forward_dividend_yield_base": 51.9812
   },
   "000333": {
     "name": "美的集团",
@@ -411,7 +406,7 @@
       {
         "报告时间": "2025年报",
         "分红说明": "10派8.0元(含税)",
-        "每股分红": 0.80
+        "每股分红": 0.8
       }
     ],
     "total_dividend_per_share": 1.45,
@@ -428,7 +423,7 @@
       {
         "报告时间": "2025年报",
         "分红说明": "10派9.0元(含税)",
-        "每股分红": 0.90
+        "每股分红": 0.9
       }
     ],
     "total_dividend_per_share": 1.38,
@@ -440,16 +435,16 @@
       {
         "报告时间": "2025中报",
         "分红说明": "10派20元(含税)",
-        "每股分红": 2.00
+        "每股分红": 2.0
       },
       {
         "报告时间": "2025年报",
         "分红说明": "10派10元(含税)",
-        "每股分红": 1.00
+        "每股分红": 1.0
       }
     ],
-    "total_dividend_per_share": 3.00,
-    "forward_dividend_yield_base": 3.00
+    "total_dividend_per_share": 3.0,
+    "forward_dividend_yield_base": 3.0
   },
   "600750": {
     "name": "华润江中",
@@ -457,7 +452,7 @@
       {
         "报告时间": "2025中报",
         "分红说明": "10派5.0元(含税)",
-        "每股分红": 0.50
+        "每股分红": 0.5
       },
       {
         "报告时间": "2025年报",
@@ -525,15 +520,15 @@
       {
         "报告时间": "2025中报",
         "分红说明": "10派5.0元(含税)",
-        "每股分红": 0.50
+        "每股分红": 0.5
       },
       {
         "报告时间": "2025年报",
         "分红说明": "10派20元(含税)",
-        "每股分红": 2.00
+        "每股分红": 2.0
       }
     ],
-    "total_dividend_per_share": 2.50,
-    "forward_dividend_yield_base": 2.50
+    "total_dividend_per_share": 2.5,
+    "forward_dividend_yield_base": 2.5
   }
 }

@@ -317,6 +317,7 @@
     .sr-badge.opportunity { background: rgba(0,200,83,0.15); color: #00c853; border: 1px solid rgba(0,200,83,0.4); }
     .sr-badge.neutral { background: rgba(255,171,0,0.15); color: #ffab00; border: 1px solid rgba(255,171,0,0.4); }
     .sr-badge.warning { background: rgba(255,23,68,0.15); color: #ff1744; border: 1px solid rgba(255,23,68,0.4); }
+    .sr-badge.stale { background: rgba(139,148,158,0.15); color: #8b949e; border: 1px solid rgba(139,148,158,0.4); }
     .sr-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }
     .sr-metric { background: #1c2333; border: 1px solid #30363d; border-radius: 10px; padding: 14px 16px; }
     .sr-metric .label { font-size: 12px; color: #8b949e; }
@@ -754,7 +755,8 @@ function renderStyleRotation(d) {
   const sigMap = {
     opportunity: {cls: 'opportunity', label: '✅ 机会：成长低估，布局创业板'},
     neutral:     {cls: 'neutral',     label: '➖ 中性：均衡配置'},
-    warning:     {cls: 'warning',     label: '⚠️ 预警：成长高估，转向红利'}
+    warning:     {cls: 'warning',     label: '⚠️ 预警：成长高估，转向红利'},
+    stale:       {cls: 'stale',       label: '⚠️ 数据过期，暂不显示信号'}
   };
   const sig = sigMap[d.signal] || sigMap.neutral;
   const cy = d.index_cy || {}, div = d.index_div || {};
@@ -762,6 +764,7 @@ function renderStyleRotation(d) {
   const chart = buildRatioChart(d.history || [], ratio, buy, sell);
   const ratioColor = sig.cls === 'opportunity' ? '#00c853' : sig.cls === 'warning' ? '#ff1744' : '#ffab00';
   const sampleNote = d.is_sample ? '<br><span style="color:#ffab00;">⚠️ 当前为示例数据，运行 style_rotation/main.py 后将更新为真实数据</span>' : '';
+  const staleNote = d.is_stale ? '<br><span style="color:#ffab00;">⚠️ 数据已过期 ' + (d.staleness_days != null ? d.staleness_days : '?') + ' 天（最新数据日期 ' + (d.data_date || '--') + '），信号已冻结，请检查数据源与定时任务。</span>' : '';
   container.innerHTML = ''
     + '<div class="style-rotation-card">'
     + '  <div class="sr-header">'
@@ -777,7 +780,7 @@ function renderStyleRotation(d) {
     + '  <div class="sr-chart">' + chart + '</div>'
     + '  <div class="sr-desc">'
     + '    指标：<code>ratio = 创业板指 / 中证红利</code> ｜ 黄金分割阈值：<code>0.382 / 0.618</code><br>'
-    + (d.signal_text || '') + sampleNote + '<br>'
+    + (d.signal_text || '') + sampleNote + staleNote + '<br>'
     + '    更新时间：' + (d.update_time || '--') + ' ｜ 数据来源：akshare ｜ 仅量化观测，不构成投资建议'
     + '  </div>'
     + '</div>';

@@ -49,6 +49,7 @@ INDEX_CY = "399006"        # 创业板指
 INDEX_DIV = "000922"       # 中证红利
 THRESHOLD_BUY = 0.382      # 下沿阈值（机会）
 THRESHOLD_SELL = 0.618     # 上沿阈值（预警）
+STALE_MAX_DAYS = 14        # 数据新鲜度上限（自然日）：超过则判定数据过期，不输出方向信号
 START_DATE = "20150101"
 CACHE_FILE = "index_cache.json"
 OUTPUT_JSON = "style_rotation_data.json"
@@ -106,8 +107,13 @@ def save_cache(cache):
 
 
 def fetch_index_window(code, start_date, end_date):
-    """获取 [start_date, end_date] 区间指数日线，返回 {date_str: close}"""
-    out = {}
+    """获取 [start_date, end_date] 区间指数日线，返回 {date_str: close}
+
+    遍历全部候选数据源，选取「最新日期最靠后」、覆盖更全的源再返回。
+    修复：原先「取第一个非空结果」会导致当某个数据源只更新到旧日期时
+    （例如 stock_zh_index_daily 对 000922 只返回截至 2019 的数据），
+    永远拿不到数据更新的后备源（index_zh_a_hist），从而用过期数据出信号。
+    """
     prefixes = ["sz"] if code == "399006" else ["sh"]
     candidates = []
     for p in prefixes:
@@ -115,6 +121,7 @@ def fetch_index_window(code, start_date, end_date):
         candidates.append(("stock_zh_index_daily_em", f"{p}{code}"))
     candidates.append(("index_zh_a_hist", code))
 
+    results = []
     errors = []
     for func_name, sym in candidates:
         try:
@@ -130,18 +137,34 @@ def fetch_index_window(code, start_date, end_date):
                 continue
             df = df.rename(columns={"date": "date", "日期": "date",
                                     "close": "close", "收盘": "close"})
+            if "date" not in df.columns or "close" not in df.columns:
+                errors.append(f"{func_name}:missing_columns")
+                continue
             df = df[["date", "close"]].dropna()
+            parsed = {}
             for _, row in df.iterrows():
                 d = pd.to_datetime(row["date"]).strftime("%Y-%m-%d")
                 c = safe_float(row["close"])
                 if c is not None:
-                    out[d] = c
-            if out:
-                return out
+                    parsed[d] = c
+            if parsed:
+                results.append({
+                    "source": func_name,
+                    "data": parsed,
+                    "max_date": max(parsed.keys()),
+                    "count": len(parsed),
+                })
         except Exception as e:
             errors.append(f"{func_name}:{e}")
             continue
-    raise RuntimeError(" | ".join(errors))
+
+    if not results:
+        raise RuntimeError(" | ".join(errors) if errors else "所有数据源均无有效数据")
+
+    # 选最新日期最靠后的源；最新日期相同时取数据点更多者（更完整）
+    best = max(results, key=lambda r: (r["max_date"], r["count"]))
+    logger.info("    选用数据源 %s（最新 %s，%d 条）", best["source"], best["max_date"], best["count"])
+    return best["data"]
 
 
 def get_index_series(code):
@@ -238,7 +261,18 @@ def main():
     logger.info("创业板指 / 中证红利 比值 = %.4f", latest_ratio)
     logger.info("阈值区间：%.3f ~ %.3f", THRESHOLD_BUY, THRESHOLD_SELL)
 
-    if latest_ratio >= THRESHOLD_SELL:
+    # 数据新鲜度校验：最新交易日距今天超过阈值（如长假/停更）则冻结方向信号，
+    # 避免基于过期数据输出「布局/预警」等误导信号。
+    staleness_days = int((beijing_now().date() - pd.Timestamp(latest_date).date()).days)
+    is_stale = staleness_days > STALE_MAX_DAYS
+
+    if is_stale:
+        signal = "stale"
+        signal_text = (
+            f"【⚠️ 数据过期】最新数据日期为 {latest_date.date()}，"
+            f"距今 {staleness_days} 天，超出阈值 {STALE_MAX_DAYS} 天，暂不输出买卖信号，请检查数据源"
+        )
+    elif latest_ratio >= THRESHOLD_SELL:
         signal = "warning"
         signal_text = "【⚠️ 预警信号】成长相对红利高估，建议降低创业板仓位，增配中证红利"
     elif latest_ratio <= THRESHOLD_BUY:
@@ -268,6 +302,8 @@ def main():
         "sell_threshold": THRESHOLD_SELL,
         "signal": signal,
         "signal_text": signal_text,
+        "is_stale": is_stale,
+        "staleness_days": staleness_days,
         "history": history,
     }
     with open(out_path(OUTPUT_JSON), "w", encoding="utf-8") as f:
