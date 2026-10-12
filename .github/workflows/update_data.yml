@@ -94,19 +94,39 @@ jobs:
       - name: 💾 提交并更新 data.json
         id: commit
         run: |
+          BRANCH="${GITHUB_REF_NAME}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
           git add data.json
           # 仅当有变化时才提交（避免无意义的历史记录）
           if git diff --staged --quiet; then
             echo "📊 数据无变化，跳过提交"
-            echo "changed=false" >> $GITHUB_OUTPUT
-          else
-            git commit -m "📊 自动更新股票监测数据 $(TZ=Asia/Shanghai date +'%Y-%m-%d %H:%M')"
-            git push
-            echo "✅ data.json 已自动提交并推送"
-            echo "changed=true" >> $GITHUB_OUTPUT
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          git commit -m "📊 自动更新股票监测数据 $(TZ=Asia/Shanghai date +'%Y-%m-%d %H:%M')"
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+          # 先同步到最新远程再推送，避免与本仓库其他定时工作流（如风格轮动）
+          # 并发更新时产生 non-fast-forward 推送失败。
+          for attempt in 1 2 3; do
+            git fetch origin "$BRANCH" || { echo "❌ 拉取远程失败"; exit 1; }
+            # rebase 到最新远程；若冲突（极少数，两工作流改动不同文件），以本地刚生成的最新数据为准
+            if ! git pull --rebase origin "$BRANCH" 2>/dev/null; then
+              echo "⚠️ rebase 冲突（第${attempt}次），以本地最新 data.json 为准"
+              git rebase --abort 2>/dev/null || true
+              git rebase --strategy-option=theirs origin "$BRANCH" 2>/dev/null || git rebase --abort 2>/dev/null || true
+            fi
+            if git push origin "HEAD:${BRANCH}"; then
+              echo "✅ data.json 已自动提交并推送"
+              exit 0
+            fi
+            echo "⚠️ 推送失败（第${attempt}次），稍后重试"
+            sleep 30
+          done
+          echo "❌ 推送多次失败，请检查日志"
+          exit 1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
