@@ -119,6 +119,9 @@ def fetch_index_window(code, start_date, end_date):
     for p in prefixes:
         candidates.append(("stock_zh_index_daily", f"{p}{code}"))
         candidates.append(("stock_zh_index_daily_em", f"{p}{code}"))
+        # 腾讯源：对中证红利(000922)等可返回最新完整数据，
+        # 用于弥补新浪源(sh000922)停更于 2019、东财源偶发连接失败的问题
+        candidates.append(("stock_zh_index_daily_tx", f"{p}{code}"))
     candidates.append(("index_zh_a_hist", code))
 
     results = []

@@ -36,10 +36,32 @@ jobs:
 
       - name: 提交数据回仓库
         run: |
+          BRANCH="${GITHUB_REF_NAME}"
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add style_rotation/style_rotation_data.json style_rotation/monitor_log.txt style_rotation/index_cache.json || true
-          git diff --cached --quiet && echo "无变化" || (git commit -m "chore: update style rotation data" && git push)
+          if git diff --cached --quiet; then
+            echo "无变化"
+            exit 0
+          fi
+          git commit -m "chore: update style rotation data"
+          # 先 rebase 到最新远程再推送，避免与「更新股票监测数据」等工作流并发时 non-fast-forward 失败
+          for attempt in 1 2 3; do
+            git fetch origin "$BRANCH" || { echo "❌ 拉取远程失败"; exit 1; }
+            if ! git pull --rebase origin "$BRANCH" 2>/dev/null; then
+              echo "⚠️ rebase 冲突（第${attempt}次），以本地最新数据为准"
+              git rebase --abort 2>/dev/null || true
+              git rebase --strategy-option=theirs origin "$BRANCH" 2>/dev/null || git rebase --abort 2>/dev/null || true
+            fi
+            if git push origin "HEAD:${BRANCH}"; then
+              echo "✅ 数据已提交并推送"
+              exit 0
+            fi
+            echo "⚠️ 推送失败（第${attempt}次），稍后重试"
+            sleep 30
+          done
+          echo "❌ 推送多次失败，请检查日志"
+          exit 1
 
       - name: 上传结果制品
         uses: actions/upload-artifact@v4
