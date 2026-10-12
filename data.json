@@ -1,9 +1,9 @@
 {
-  "update_time": "2026-10-09 16:08:01 (北京时间)",
-  "data_date": "2026-10-09",
+  "update_time": "2026-10-12 08:57:38 (北京时间)",
+  "data_date": "2026-10-12",
   "oil_price": {
-    "price": 103.28,
-    "change_pct": -0.96
+    "price": 103.39,
+    "change_pct": -1.27
   },
   "hs300": {
     "price": 4317.255,
@@ -152,15 +152,15 @@
         "price": 11.6,
         "change_pct": 0.09,
         "forward_dividend": 0.47,
-        "pe": 11.6,
+        "pe": 11.958763,
         "pb": 1.2960894,
         "peg": 0.28,
         "pev": 1.2960894,
         "dividend_yield": 4.05,
         "dividend_yield_target": 4.83,
         "market_cap": 21230.43,
-        "oil_price": 103.28,
-        "oil_change_pct": -0.96,
+        "oil_price": 103.39,
+        "oil_change_pct": -1.27,
         "signal": "red",
         "score": 10,
         "reasons": [
@@ -183,8 +183,8 @@
         "dividend_yield": 4.15,
         "dividend_yield_target": 6.5,
         "market_cap": 10497.69,
-        "oil_price": 103.28,
-        "oil_change_pct": -0.96,
+        "oil_price": 103.39,
+        "oil_change_pct": -1.27,
         "signal": "red",
         "score": 0,
         "reasons": [
@@ -206,8 +206,8 @@
         "dividend_yield": 3.71,
         "dividend_yield_target": 4.5,
         "market_cap": 6506.44,
-        "oil_price": 103.28,
-        "oil_change_pct": -0.96,
+        "oil_price": 103.39,
+        "oil_change_pct": -1.27,
         "signal": "green",
         "score": 50,
         "reasons": [
@@ -230,8 +230,8 @@
         "dividend_yield": 3.52,
         "dividend_yield_target": 6.0,
         "market_cap": 2614.74,
-        "oil_price": 103.28,
-        "oil_change_pct": -0.96,
+        "oil_price": 103.39,
+        "oil_change_pct": -1.27,
         "signal": "red",
         "score": 0,
         "reasons": [
@@ -334,7 +334,7 @@
         "category": "消费白马",
         "price": 1263.0,
         "change_pct": 0.57,
-        "forward_dividend": 51.98123,
+        "forward_dividend": 51.9812,
         "pe": 19.415833,
         "pb": 6.2838945,
         "peg": 2.09,
@@ -364,7 +364,7 @@
         "pev": 2.8916085,
         "dividend_yield": 5.21,
         "dividend_yield_target": 5.5,
-        "market_cap": 6291.64,
+        "market_cap": 6291.78,
         "signal": "red",
         "score": 5,
         "reasons": [
