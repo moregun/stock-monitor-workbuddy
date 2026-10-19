@@ -1,5 +1,5 @@
 {
-  "update_time": "2026-10-18 12:50:50 (北京时间)",
+  "update_time": "2026-10-19 12:59:12 (北京时间)",
   "data_date": "2026-10-16",
   "index_cy": {
     "code": "399006",
@@ -17,7 +17,7 @@
   "signal": "neutral",
   "signal_text": "【➖ 中性区间】风格无明确机会，均衡配置",
   "is_stale": false,
-  "staleness_days": 2,
+  "staleness_days": 3,
   "history": [
     {
       "date": "2015-01-05",
