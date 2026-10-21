@@ -1,23 +1,23 @@
 {
-  "update_time": "2026-10-20 13:04:37 (北京时间)",
-  "data_date": "2026-10-19",
+  "update_time": "2026-10-21 13:06:17 (北京时间)",
+  "data_date": "2026-10-21",
   "index_cy": {
     "code": "399006",
     "name": "创业板指",
-    "close": 2746.29
+    "close": 2703.07
   },
   "index_div": {
     "code": "000922",
     "name": "中证红利",
-    "close": 5623.37
+    "close": 5506.32
   },
-  "ratio": 0.4884,
+  "ratio": 0.4909,
   "buy_threshold": 0.382,
   "sell_threshold": 0.618,
   "signal": "neutral",
   "signal_text": "【➖ 中性区间】风格无明确机会，均衡配置",
   "is_stale": false,
-  "staleness_days": 1,
+  "staleness_days": 0,
   "history": [
     {
       "date": "2015-01-05",
@@ -181,7 +181,7 @@
     },
     {
       "date": "2015-03-09",
-      "ratio": 0.5569
+      "ratio": 0.5568
     },
     {
       "date": "2015-03-10",
@@ -1393,7 +1393,7 @@
     },
     {
       "date": "2016-05-31",
-      "ratio": 0.5806
+      "ratio": 0.5805
     },
     {
       "date": "2016-06-01",
@@ -11470,6 +11470,14 @@
     {
       "date": "2026-10-19",
       "ratio": 0.4884
+    },
+    {
+      "date": "2026-10-20",
+      "ratio": 0.4931
+    },
+    {
+      "date": "2026-10-21",
+      "ratio": 0.4909
     }
   ]
 }
