@@ -1,17 +1,17 @@
 {
-  "update_time": "2026-10-27 13:20:12 (北京时间)",
-  "data_date": "2026-10-26",
+  "update_time": "2026-10-28 14:00:24 (北京时间)",
+  "data_date": "2026-10-27",
   "index_cy": {
     "code": "399006",
     "name": "创业板指",
-    "close": 2638.23
+    "close": 2548.15
   },
   "index_div": {
     "code": "000922",
     "name": "中证红利",
-    "close": 5465.01
+    "close": 5497.74
   },
-  "ratio": 0.4827,
+  "ratio": 0.4635,
   "buy_threshold": 0.382,
   "sell_threshold": 0.618,
   "signal": "neutral",
@@ -11490,6 +11490,10 @@
     {
       "date": "2026-10-26",
       "ratio": 0.4827
+    },
+    {
+      "date": "2026-10-27",
+      "ratio": 0.4635
     }
   ]
 }
